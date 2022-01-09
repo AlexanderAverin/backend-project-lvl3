@@ -8,14 +8,14 @@ import fs from 'fs/promises';
 import nock from 'nock';
 import path from 'path';
 
-import htmlData from '../__fixtures__/htmlData.js';
-
 import savePage from '../src/savePage.js';
 
 import load from '../src/loader.js';
 
-// const getFixturesFilepath = (filename) => path
-// .join('__fixtures__', filename);
+const getFixturesFile = (filename) => {
+  const filepath = path.join('__fixtures__', filename);
+  return fs.readFile(filepath, 'utf8');
+};
 
 const nockedUrl = (url, response, data = '/') => {
   nock(url)
@@ -26,11 +26,14 @@ const nockedUrl = (url, response, data = '/') => {
 nock.disableNetConnect();
 
 let dirpath;
+let response;
 // let mock;
 
 beforeEach(async () => {
   dirpath = await fs
     .mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+
+  response = await getFixturesFile('data.html');
 
   // mock = jest.fn();
 });
@@ -45,7 +48,6 @@ test('Test load fucntion', async () => {
 });
 
 test('Test savePage function', async () => {
-  const response = htmlData.trim();
   const url = 'https://ru.hexlet.io';
   nockedUrl(url, response, '/');
 
