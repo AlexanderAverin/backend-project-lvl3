@@ -2,7 +2,7 @@
 
 import { Command } from 'commander/esm.mjs';
 
-import savePage from '../src/savePage.js';
+import savePage from '../src/pageSaver.js';
 
 const program = new Command();
 

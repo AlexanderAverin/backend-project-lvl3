@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import nock from 'nock';
 import path from 'path';
 
-import savePage from '../src/savePage.js';
+import savePage from '../src/pageSaver';
 
 import load from '../src/loader.js';
 
