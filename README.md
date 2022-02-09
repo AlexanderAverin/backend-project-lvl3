@@ -8,4 +8,6 @@
 [![Build](https://github.com/AlexanderAverin/backend-project-lvl3/actions/workflows/build.yaml/badge.svg)](https://github.com/AlexanderAverin/backend-project-lvl3/actions/workflows/build.yaml)
 
 Package work example:
-https://asciinema.org/a/TUJZIZY3ZZE1QG2M7eDArEwK4
+
+Downloading html: https://asciinema.org/a/TUJZIZY3ZZE1QG2M7eDArEwK4
+Downloading images: https://asciinema.org/a/KAo2Zth9iGvIpauvTCPnqGbyt

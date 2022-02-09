@@ -1,25 +1,24 @@
+/* eslint-disable func-names */
 import {
   test, expect, beforeEach,
-  // jest,
 } from '@jest/globals';
 
 import os from 'os';
 import fs from 'fs/promises';
-import nock from 'nock';
 import path from 'path';
+import cheerio from 'cheerio';
+import nock from 'nock';
 
-import savePage from '../src/pageSaver';
+import savePage from '../src/pageSaver.js';
 
-import load from '../src/loader.js';
-
-const getFixturesFile = (filename) => {
+const getFixturesFile = (filename, encoding = 'utf8') => {
   const filepath = path.join('__fixtures__', filename);
-  return fs.readFile(filepath, 'utf8');
+  return fs.readFile(filepath, encoding);
 };
 
-const nockedUrl = (url, response, data = '/') => {
+const nockedUrl = (url, urlPath, response) => {
   nock(url)
-    .get(data)
+    .get(urlPath)
     .reply(200, response);
 };
 
@@ -27,32 +26,56 @@ nock.disableNetConnect();
 
 let dirpath;
 let response;
-// let mock;
+let url;
+let imagePath;
+let exampleImage;
 
 beforeEach(async () => {
   dirpath = await fs
     .mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
-  response = await getFixturesFile('data.html');
-
-  // mock = jest.fn();
+  url = 'https://ru.hexlet.io/courses';
+  response = await getFixturesFile('pageBefore.html');
+  imagePath = '/assets/professions/nodejs.png';
+  exampleImage = await getFixturesFile('nodejs.png', 'binary');
+  nockedUrl(url, '', response);
+  nockedUrl(url, imagePath, exampleImage);
 });
 
-test('Test load fucntion', async () => {
-  const url = 'https://ru.hexlet.io';
-  nockedUrl(url, 'data', '/');
+test('Test that function create html file', async () => {
+  await savePage(url, dirpath);
+  const filesList = await fs.readdir(dirpath);
 
-  const data = await load(url);
-  expect(data).not.toBe(undefined);
-  expect(data).not.toBe(null);
+  expect(filesList.includes('ru-hexlet-io-courses.html')).toBeTruthy();
 });
 
-test('Test savePage function', async () => {
-  const url = 'https://ru.hexlet.io';
-  nockedUrl(url, response, '/');
+// change savePage arguments
 
-  const filepath = await savePage(dirpath, url);
-  const result = await fs.readFile(filepath, 'utf8');
+test('Test that fuction create directory with page images', async () => {
+  await savePage(url, dirpath);
+  const filesList = await fs.readdir(dirpath);
+  const dirs = filesList.filter(async (name) => {
+    const stat = await fs.stat(path.join(dirpath, name));
+    return stat.isDirectory();
+  });
 
-  expect(result).toEqual(response);
+  expect(dirs.includes('ru-hexlet-io-courses_files')).toBeTruthy();
+});
+
+test('Test that function save and changes links in .html file', async () => {
+  const htmlFilePath = await savePage(url, dirpath);
+  const readenData = await fs.readFile(htmlFilePath, 'utf8');
+  const htmlFileAfter = await getFixturesFile('pageAfter.html');
+
+  const $ = cheerio.load(htmlFileAfter);
+
+  $('img').each(function () {
+    const src = $(this).attr('src');
+    const newSrc = path.join(dirpath, src);
+    $(this).attr('src', newSrc);
+  });
+
+  const expectedResult = $.html();
+
+  expect(readenData).toEqual(expectedResult);
 });

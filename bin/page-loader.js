@@ -17,7 +17,7 @@ program
 
     const { output } = options;
 
-    savePage(output, url).then(console.log);
+    savePage(url, output).then(console.log);
   });
 
 program.parse(process.argv);
