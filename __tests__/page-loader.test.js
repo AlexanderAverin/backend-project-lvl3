@@ -40,6 +40,11 @@ beforeEach(async () => {
   exampleImage = await getFixturesFile('nodejs.png', 'binary');
   nockedUrl(url, '', response);
   nockedUrl(url, imagePath, exampleImage);
+  nockedUrl('https://cdn2.hexlet.io', '/assets/menu.css', '');
+  nockedUrl(url, '/assets/application.css', '');
+  nockedUrl(url, '/courses', '');
+  nockedUrl('https://js.stripe.com', '/v3', '');
+  nockedUrl('https://ru.hexlet.io', '/packs/js/runtime.js', '');
 });
 
 test('Test that function create html file', async () => {
@@ -49,9 +54,7 @@ test('Test that function create html file', async () => {
   expect(filesList.includes('ru-hexlet-io-courses.html')).toBeTruthy();
 });
 
-// change savePage arguments
-
-test('Test that fuction create directory with page images', async () => {
+test('Test that fuction create directory with page resourses', async () => {
   await savePage(url, dirpath);
   const filesList = await fs.readdir(dirpath);
   const dirs = filesList.filter(async (name) => {
@@ -68,11 +71,22 @@ test('Test that function save and changes links in .html file', async () => {
   const htmlFileAfter = await getFixturesFile('pageAfter.html');
 
   const $ = cheerio.load(htmlFileAfter);
+  const tagsList = ['img', 'link', 'script'];
 
-  $('img').each(function () {
-    const src = $(this).attr('src');
-    const newSrc = path.join(dirpath, src);
-    $(this).attr('src', newSrc);
+  const mapping = {
+    img: 'src',
+    script: 'src',
+    link: 'href',
+  };
+  // Change paths in expected html (dirpath + <name>)
+  tagsList.forEach((tag) => {
+    $(tag).each(function () {
+      const resourseUrl = $(this).attr(mapping[tag]);
+      const filepath = path.join(dirpath, resourseUrl);
+      if (!resourseUrl.startsWith('https://')) {
+        $(this).attr(mapping[tag], filepath);
+      }
+    });
   });
 
   const expectedResult = $.html();
