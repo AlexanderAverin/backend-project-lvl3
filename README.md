@@ -14,3 +14,5 @@ Downloading html: https://asciinema.org/a/TUJZIZY3ZZE1QG2M7eDArEwK4
 Downloading images: https://asciinema.org/a/KAo2Zth9iGvIpauvTCPnqGbyt
 
 Downloading links and scripts: https://asciinema.org/a/iDVTpqcMVfFTMsbn1mx9cv1VM
+
+Debug working: https://asciinema.org/a/LdZg1JEhRcvGmekAMzQyJKsVl

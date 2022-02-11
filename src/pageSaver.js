@@ -64,7 +64,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
     $(tag).each(function () {
       const { pathname } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pathsLog('Path %o', resourseData);
+      pathsLog('Filepath %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(path.join(pathname, resourseData), mainUrl).href;
@@ -95,7 +95,9 @@ const savePage = (url, dirpath) => {
       }
       return load(resourseUrl).then((resurseResponse) => {
         const imageFilepath = path.join(filesDirectoryPath, name);
-        fs.writeFile(imageFilepath, resurseResponse.data).catch();
+        fs.writeFile(imageFilepath, resurseResponse.data).catch((e) => {
+          pathsLog('Writing file error %o', e);
+        });
       });
     });
   })
