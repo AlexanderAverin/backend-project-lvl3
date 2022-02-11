@@ -1,8 +1,16 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable func-names */
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
 import cheerio from 'cheerio';
+import debug from 'debug';
+// Unused import (axiois debug)
+import axiosDebug from 'axios-debug-log';
+
+const pathsLog = debug('page-loader');
+
+pathsLog.color = 270;
 
 const load = (url) => {
   const mapping = {
@@ -33,6 +41,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
 
   const extnameFromUrl = path.extname(formatedUrl);
   const fileExtname = formatedUrl.endsWith('/') || path.extname(formatedUrl.split('/').slice(-1).join('')) === '' ? '.html' : extnameFromUrl;
+  pathsLog('File extname is %o', fileExtname);
 
   const urlWithoutExtname = formatedUrl.endsWith('/')
     ? formatedUrl.slice(0, -1)
@@ -55,6 +64,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
     $(tag).each(function () {
       const { pathname } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
+      pathsLog('Path %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(path.join(pathname, resourseData), mainUrl).href;
@@ -85,7 +95,7 @@ const savePage = (url, dirpath) => {
       }
       return load(resourseUrl).then((resurseResponse) => {
         const imageFilepath = path.join(filesDirectoryPath, name);
-        fs.writeFile(imageFilepath, resurseResponse.data).catch(() => fs.writeFile(imageFilepath, ''));
+        fs.writeFile(imageFilepath, resurseResponse.data).catch();
       });
     });
   })

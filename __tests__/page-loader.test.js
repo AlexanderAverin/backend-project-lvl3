@@ -8,8 +8,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import cheerio from 'cheerio';
 import nock from 'nock';
+import debug from 'debug';
 
 import savePage from '../src/pageSaver.js';
+
+const log = debug('page-loader-test');
+
+log.color = 270;
 
 const getFixturesFile = (filename, encoding = 'utf8') => {
   const filepath = path.join('__fixtures__', filename);
@@ -50,6 +55,7 @@ beforeEach(async () => {
 test('Test that function create html file', async () => {
   await savePage(url, dirpath);
   const filesList = await fs.readdir(dirpath);
+  log('files list %o', filesList);
 
   expect(filesList.includes('ru-hexlet-io-courses.html')).toBeTruthy();
 });
@@ -83,6 +89,7 @@ test('Test that function save and changes links in .html file', async () => {
     $(tag).each(function () {
       const resourseUrl = $(this).attr(mapping[tag]);
       const filepath = path.join(dirpath, resourseUrl);
+      log('Resourse url is %o', resourseUrl);
       if (!resourseUrl.startsWith('https://')) {
         $(this).attr(mapping[tag], filepath);
       }
