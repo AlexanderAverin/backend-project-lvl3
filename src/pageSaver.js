@@ -121,7 +121,9 @@ const savePage = (url, dirpath) => {
 
     return Promise.all([promise1, promise2]);
   })
-    .then(() => (tasksList.length !== 0 ? new Listr(tasksList).run() : ''))
+    .then(() => (tasksList.length !== 0 ? new Listr(tasksList, { concurrent: true }).run() : '')).catch((err) => {
+      throw err;
+    })
     .then(() => Promise.resolve(htmlFilepath));
 };
 
