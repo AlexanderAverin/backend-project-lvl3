@@ -19,3 +19,5 @@ Downloading links and scripts: https://asciinema.org/a/iDVTpqcMVfFTMsbn1mx9cv1VM
 Debug working: https://asciinema.org/a/LdZg1JEhRcvGmekAMzQyJKsVl
 
 Errors handling: https://asciinema.org/a/enqdjgjcUn7be9oLAX1WTPMyb 
+
+Visual resourses downloading: https://asciinema.org/a/NUeG6UF8mxCVX21fLVz9B5HC1
