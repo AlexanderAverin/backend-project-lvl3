@@ -58,7 +58,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
 
 const formatDocument = (mainUrl, document, filesDirpath) => {
   const $ = cheerio.load(document);
-  const resoursesList = [];
+  // const resoursesList = [];
   const mapping = {
     img: 'src',
     script: 'src',
@@ -66,22 +66,21 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
   };
   // resoursesList: [<imageUrl>, <name>]
   const tags = ['img', 'script', 'link'];
-  tags.forEach((tag) => {
-    $(tag).each(function () {
-      const { pathname } = new URL(mainUrl);
-      const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pathsLog('Filepath: %o', resourseData);
-      const resourse = isAbsolutePath(resourseData)
-        ? resourseData
-        : new URL(path.join(pathname, resourseData), mainUrl).href;
+  const resoursesList = tags.flatMap((tag) => $(tag).map(function () {
+    const { pathname } = new URL(mainUrl);
+    const resourseData = $(this).attr(mapping[tag]) ?? '';
+    pathsLog('Filepath: %o', resourseData);
+    const resourse = isAbsolutePath(resourseData)
+      ? resourseData
+      : new URL(path.join(pathname, resourseData), mainUrl).href;
       // Check that main url host equal resourse url host
-      if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
-        const name = getFilename(mainUrl, resourse);
-        resoursesList.push({ resourseUrl: resourse, name });
-        $(this).attr(mapping[tag], path.join(filesDirpath, name));
-      }
-    });
-  });
+    if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
+      const name = getFilename(mainUrl, resourse);
+      $(this).attr(mapping[tag], path.join(filesDirpath, name));
+      return { resourseUrl: resourse, name };
+    }
+    return [];
+  }).get());
 
   return { formatedDocument: $.html(), resoursesList };
 };
@@ -90,9 +89,11 @@ const savePage = (url, dirpath) => {
   const tasksList = [];
   const htmlFilepath = path.join(dirpath, getFilename(url));
   pathsLog('Html filepath: %o', htmlFilepath);
-  return load(url).then(({ data }) => {
+  return load(url).then((response) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
-    const { formatedDocument, resoursesList } = formatDocument(url, data, filesDirectoryPath);
+    const {
+      formatedDocument, resoursesList,
+    } = formatDocument(url, response.data ?? '', filesDirectoryPath);
 
     const promise1 = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
       throw err;
@@ -101,6 +102,7 @@ const savePage = (url, dirpath) => {
       throw err;
     });
 
+    pathsLog('list: %o', resoursesList);
     resoursesList.forEach(({ resourseUrl, name }) => {
       if (path.extname(resourseUrl) === '.html') {
         return savePage(resourseUrl);
@@ -110,14 +112,13 @@ const savePage = (url, dirpath) => {
           title: resourseUrl,
           task: () => load(resourseUrl).then((resurseResponse) => {
             const imageFilepath = path.join(filesDirectoryPath, name);
-            fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
+            fs.writeFile(imageFilepath, resurseResponse.data ?? '').catch((err) => {
               throw err;
             });
           }),
         });
       }
     });
-    pathsLog('list', resoursesList);
 
     return Promise.all([promise1, promise2]);
   })

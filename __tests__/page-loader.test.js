@@ -72,42 +72,30 @@ test('Test that fuction create directory with page resourses', async () => {
 
 test('Test that function hand fs write file error', async () => {
   nockedUrl('https://ru.hexlet.io', '/null', null);
-  expect.assertions(1);
-  try {
-    await savePage('https://ru.hexlet.io/null', dirpath);
-  } catch (err) {
+  await savePage('https://ru.hexlet.io/null', dirpath).catch((err) => {
     expect(err).not.toEqual(undefined);
-  }
+  });
 });
 
 test('Test that fucntion throw error becouse catch 404 error', async () => {
   nockedUrl('https://ru.hexlet.io', '/abc', response, 404);
-  expect.assertions(1);
-  try {
-    await savePage('https://ru.hexlet.io/abc', dirpath);
-  } catch (err) {
+  await savePage('https://ru.hexlet.io/abc', dirpath).catch((err) => {
     expect(err).not.toEqual(undefined);
-  }
+  });
 });
 
 test('Test that function throw error becouse catch 500 error', async () => {
   nockedUrl('https://ru.hexlet.io', '/a', response, 500);
-  expect.assertions(1);
-  try {
-    await savePage('https://ru.hexlet.io/a', dirpath);
-  } catch (err) {
+  await savePage('https://ru.hexlet.io/a', dirpath).catch((err) => {
     expect(err).not.toEqual(undefined);
-  }
+  });
 });
 
 test('Test that function throw error becouse _files directory has already exist', async () => {
-  expect.assertions(1);
   await savePage(url, dirpath);
-  try {
-    await savePage(url, dirpath);
-  } catch (err) {
+  await savePage(url, dirpath).catch((err) => {
     expect(err).not.toEqual(undefined);
-  }
+  });
 });
 
 test('Test that function save and changes links in .html file', async () => {
@@ -139,4 +127,11 @@ test('Test that function save and changes links in .html file', async () => {
   const expectedResult = $.html();
 
   expect(readenData).toEqual(expectedResult);
+});
+
+test('Test that function normal work with null response', async () => {
+  nockedUrl('https://ru.hexlet.io', '/b', null);
+  await savePage('https://ru.hexlet.io/b', dirpath).catch((err) => {
+    expect(err).toEqual(undefined);
+  });
 });
