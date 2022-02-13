@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 /* eslint-disable func-names */
 import fs from 'fs/promises';
@@ -5,6 +6,7 @@ import path from 'path';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import debug from 'debug';
+import Listr from 'listr';
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
 
@@ -85,6 +87,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 };
 
 const savePage = (url, dirpath) => {
+  const tasksList = [];
   const htmlFilepath = path.join(dirpath, getFilename(url));
   pathsLog('Html filepath: %o', htmlFilepath);
   return load(url).then(({ data }) => {
@@ -102,16 +105,23 @@ const savePage = (url, dirpath) => {
       if (path.extname(resourseUrl) === '.html') {
         return savePage(resourseUrl);
       }
-      return load(resourseUrl).then((resurseResponse) => {
-        const imageFilepath = path.join(filesDirectoryPath, name);
-        fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
-          throw err;
+      if (resourseUrl.slice(-1) !== '/') {
+        tasksList.push({
+          title: resourseUrl,
+          task: () => load(resourseUrl).then((resurseResponse) => {
+            const imageFilepath = path.join(filesDirectoryPath, name);
+            fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
+              throw err;
+            });
+          }),
         });
-      });
+      }
     });
+    pathsLog('list', resoursesList);
 
     return Promise.all([promise1, promise2]);
   })
+    .then(() => (tasksList.length !== 0 ? new Listr(tasksList).run() : ''))
     .then(() => Promise.resolve(htmlFilepath));
 };
 
