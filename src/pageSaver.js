@@ -14,8 +14,12 @@ pathsLog.color = 270;
 
 const load = (url) => {
   const mapping = {
-    json: () => axios.get(url, { responseType: 'json' }),
-    stream: () => axios.get(url, { responseType: 'stream' }),
+    json: () => axios.get(url, { responseType: 'json' }).catch((err) => {
+      throw err;
+    }),
+    stream: () => axios.get(url, { responseType: 'stream' }).catch((err) => {
+      throw err;
+    }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
   const urlObject = new URL(url);
@@ -41,7 +45,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
 
   const extnameFromUrl = path.extname(formatedUrl);
   const fileExtname = formatedUrl.endsWith('/') || path.extname(formatedUrl.split('/').slice(-1).join('')) === '' ? '.html' : extnameFromUrl;
-  pathsLog('File extname is %o', fileExtname);
+  pathsLog('File extname: %o', fileExtname);
 
   const urlWithoutExtname = formatedUrl.endsWith('/')
     ? formatedUrl.slice(0, -1)
@@ -64,7 +68,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
     $(tag).each(function () {
       const { pathname } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pathsLog('Filepath %o', resourseData);
+      pathsLog('Filepath: %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(path.join(pathname, resourseData), mainUrl).href;
@@ -82,12 +86,17 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 
 const savePage = (url, dirpath) => {
   const htmlFilepath = path.join(dirpath, getFilename(url));
+  pathsLog('Html filepath: %o', htmlFilepath);
   return load(url).then(({ data }) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const { formatedDocument, resoursesList } = formatDocument(url, data, filesDirectoryPath);
 
-    fs.writeFile(htmlFilepath, formatedDocument);
-    fs.mkdir(filesDirectoryPath);
+    const promise1 = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
+      throw err;
+    });
+    const promise2 = fs.mkdir(filesDirectoryPath).catch((err) => {
+      throw err;
+    });
 
     resoursesList.forEach(({ resourseUrl, name }) => {
       if (path.extname(resourseUrl) === '.html') {
@@ -95,11 +104,13 @@ const savePage = (url, dirpath) => {
       }
       return load(resourseUrl).then((resurseResponse) => {
         const imageFilepath = path.join(filesDirectoryPath, name);
-        fs.writeFile(imageFilepath, resurseResponse.data).catch((e) => {
-          pathsLog('Writing file error %o', e);
+        fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
+          throw err;
         });
       });
     });
+
+    return Promise.all([promise1, promise2]);
   })
     .then(() => Promise.resolve(htmlFilepath));
 };

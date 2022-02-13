@@ -17,7 +17,26 @@ program
 
     const { output } = options;
 
-    savePage(url, output).then(console.log);
+    savePage(url, output).catch((err) => {
+      // Axios error handlers
+      if (err.response) {
+        if (err.response.status === 404) {
+          console.error(`ERROR\n ${err.config.url} not found (error 404)`);
+          process.exit();
+        }
+        if (err.response.status === 500) {
+          console.error(`ERROR\n ${err.config.url} internal server error`);
+          process.exit();
+        }
+      }
+      // Fs errors handlers
+      if (err) {
+        if (err.code === 'EEXIST') {
+          console.error(`ERROR\n ${err.path} directory has already exist`);
+          process.exit();
+        }
+      }
+    }).then(console.log);
   });
 
 program.parse(process.argv);

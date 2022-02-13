@@ -21,10 +21,10 @@ const getFixturesFile = (filename, encoding = 'utf8') => {
   return fs.readFile(filepath, encoding);
 };
 
-const nockedUrl = (url, urlPath, response) => {
+const nockedUrl = (url, urlPath, response, returnsCode = 200) => {
   nock(url)
     .get(urlPath)
-    .reply(200, response);
+    .reply(returnsCode, response);
 };
 
 nock.disableNetConnect();
@@ -55,7 +55,7 @@ beforeEach(async () => {
 test('Test that function create html file', async () => {
   await savePage(url, dirpath);
   const filesList = await fs.readdir(dirpath);
-  log('files list %o', filesList);
+  log('files list', filesList);
 
   expect(filesList.includes('ru-hexlet-io-courses.html')).toBeTruthy();
 });
@@ -67,13 +67,53 @@ test('Test that fuction create directory with page resourses', async () => {
     const stat = await fs.stat(path.join(dirpath, name));
     return stat.isDirectory();
   });
-
   expect(dirs.includes('ru-hexlet-io-courses_files')).toBeTruthy();
 });
 
+test('Test that function hand fs write file error', async () => {
+  nockedUrl('https://ru.hexlet.io', '/null', null);
+  expect.assertions(1);
+  try {
+    await savePage('https://ru.hexlet.io/null', dirpath);
+  } catch (err) {
+    expect(err).not.toEqual(undefined);
+  }
+});
+
+test('Test that fucntion throw error becouse catch 404 error', async () => {
+  nockedUrl('https://ru.hexlet.io', '/abc', response, 404);
+  expect.assertions(1);
+  try {
+    await savePage('https://ru.hexlet.io/abc', dirpath);
+  } catch (err) {
+    expect(err).not.toEqual(undefined);
+  }
+});
+
+test('Test that function throw error becouse catch 500 error', async () => {
+  nockedUrl('https://ru.hexlet.io', '/a', response, 500);
+  expect.assertions(1);
+  try {
+    await savePage('https://ru.hexlet.io/a', dirpath);
+  } catch (err) {
+    expect(err).not.toEqual(undefined);
+  }
+});
+
+test('Test that function throw error becouse _files directory has already exist', async () => {
+  expect.assertions(1);
+  await savePage(url, dirpath);
+  try {
+    await savePage(url, dirpath);
+  } catch (err) {
+    expect(err).not.toEqual(undefined);
+  }
+});
+
 test('Test that function save and changes links in .html file', async () => {
-  const htmlFilePath = await savePage(url, dirpath);
-  const readenData = await fs.readFile(htmlFilePath, 'utf8');
+  const htmlFilepath = await savePage(url, dirpath);
+  log('Html filepath is', htmlFilepath);
+  const readenData = await fs.readFile(htmlFilepath, 'utf8');
   const htmlFileAfter = await getFixturesFile('pageAfter.html');
 
   const $ = cheerio.load(htmlFileAfter);
@@ -89,7 +129,7 @@ test('Test that function save and changes links in .html file', async () => {
     $(tag).each(function () {
       const resourseUrl = $(this).attr(mapping[tag]);
       const filepath = path.join(dirpath, resourseUrl);
-      log('Resourse url is %o', resourseUrl);
+      log('Resourse url is', resourseUrl);
       if (!resourseUrl.startsWith('https://')) {
         $(this).attr(mapping[tag], filepath);
       }
