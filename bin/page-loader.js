@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable consistent-return */
 
 import Listr from 'listr';
 import { Command } from 'commander/esm.mjs';
@@ -7,7 +8,7 @@ import savePage from '../src/pageSaver.js';
 
 const program = new Command();
 
-const isAxiosError = (error) => (error.config !== undefined);
+const isAxiosError = (error) => (error.response !== undefined);
 
 const isFileSystemError = (error) => (error.code !== undefined);
 
@@ -25,20 +26,18 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n${error.path} directory has already exist`);
       process.exit(1);
     },
-    noResponse: () => {
-      console.error(`ERROR:\n${error.url} page no response`);
+
+    EPERM: () => {
+      console.error(`ERROR:\n${error.path} operation not permised`);
       process.exit(1);
     },
   };
-  let errorCode;
   if (isAxiosError(error)) {
-    errorCode = error.response.status;
-  } else if (isFileSystemError(error)) {
-    errorCode = error.code;
+    return mapping[error.response.status]();
   }
-  errorCode = error.text;
-
-  mapping[errorCode]();
+  if (isFileSystemError(error)) {
+    return mapping[error.code]();
+  }
 };
 
 program

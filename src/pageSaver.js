@@ -52,7 +52,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
     ? formatedUrl.slice(0, -1)
     : formatedUrl.replace(fileExtname, '');
 
-  return `${urlWithoutExtname.replaceAll(searchRegexp, '-')}${fileExtname}`;
+  return `${urlWithoutExtname.replace(searchRegexp, '-')}${fileExtname}`;
 };
 
 const formatDocument = (mainUrl, document, filesDirpath) => {
@@ -94,13 +94,10 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
   return { formatedDocument: $.html(), resoursesList };
 };
 
-const savePage = (url, dirpath) => {
+const savePage = (url, dirpath = './') => {
   let tasksList;
   const htmlFilepath = path.join(dirpath, getFilename(url));
   return load(url).then((response) => {
-    if (!response || !response.data) {
-      throw new Error('noResponse', { url });
-    }
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
@@ -122,9 +119,6 @@ const savePage = (url, dirpath) => {
       return {
         title: name,
         task: () => load(resourseUrl).then((resurseResponse) => {
-          if (!resurseResponse || !resurseResponse.data) {
-            throw new Error('noResponse', { url: resurseResponse });
-          }
           const imageFilepath = path.join(filesDirectoryPath, name);
           fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
             throw err;
