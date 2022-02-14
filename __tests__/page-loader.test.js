@@ -130,7 +130,7 @@ test('Test that function save and changes links in .html file', async () => {
 });
 
 test('Test that function normal work with null response', async () => {
-  nockedUrl('https://ru.hexlet.io', '/b', null);
+  nockedUrl('https://ru.hexlet.io', '/b', undefined);
   await savePage('https://ru.hexlet.io/b', dirpath).catch((err) => {
     expect(err).toEqual(undefined);
   });

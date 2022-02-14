@@ -90,10 +90,13 @@ const savePage = (url, dirpath) => {
   const htmlFilepath = path.join(dirpath, getFilename(url));
   pathsLog('Html filepath: %o', htmlFilepath);
   return load(url).then((response) => {
+    if (!response) {
+      throw new Error('Page not response');
+    }
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
-    } = formatDocument(url, response.data ?? '', filesDirectoryPath);
+    } = formatDocument(url, response.data, filesDirectoryPath);
 
     const promise1 = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
       throw err;
@@ -112,7 +115,7 @@ const savePage = (url, dirpath) => {
           title: resourseUrl,
           task: () => load(resourseUrl).then((resurseResponse) => {
             const imageFilepath = path.join(filesDirectoryPath, name);
-            fs.writeFile(imageFilepath, resurseResponse.data ?? '').catch((err) => {
+            fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
               throw err;
             });
           }),

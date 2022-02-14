@@ -6,6 +6,35 @@ import savePage from '../src/pageSaver.js';
 
 const program = new Command();
 
+const isAxiosError = (error) => (error.config !== undefined);
+
+const isFileSystemError = (error) => (error.code !== undefined);
+
+const errorHandler = (error) => {
+  const mapping = {
+    404: () => {
+      console.error(`ERROR\n${error.config.url} not found (error 404)`);
+      process.exit(1);
+    },
+    500: () => {
+      console.error(`ERROR\n${error.config.url} internal server error`);
+      process.exit(1);
+    },
+    EEXIST: () => {
+      console.error(`ERROR\n${error.path} directory has already exist`);
+      process.exit(1);
+    },
+  };
+  let errorCode;
+  if (isAxiosError(error)) {
+    errorCode = error.response.status;
+  } else if (isFileSystemError(error)) {
+    errorCode = error.code;
+  }
+
+  return mapping[errorCode]();
+};
+
 program
   .description('Page loader utility')
   .option('-V, --version', 'output the version number')
@@ -17,25 +46,8 @@ program
 
     const { output } = options;
 
-    savePage(url, output).catch((err) => {
-      // Axios error handlers
-      if (err.response) {
-        if (err.response.status === 404) {
-          console.error(`ERROR\n${err.config.url} not found (error 404)`);
-          process.exit();
-        }
-        if (err.response.status === 500) {
-          console.error(`ERROR\n${err.config.url} internal server error`);
-          process.exit();
-        }
-      }
-      // Fs errors handlers
-      if (err) {
-        if (err.code === 'EEXIST') {
-          console.error(`ERROR\n${err.path} directory has already exist`);
-          process.exit();
-        }
-      }
+    savePage(url, output).catch((error) => {
+      errorHandler(error);
     }).then((htmlFilepath) => {
       console.log(`Page was successfully downloaded into ${htmlFilepath}`);
     });
