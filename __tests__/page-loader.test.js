@@ -73,33 +73,33 @@ test('Test that fuction create directory with page resourses', async () => {
 test('Test that function hand fs write file error', async () => {
   nockedUrl('https://ru.hexlet.io', '/null', null);
   await savePage('https://ru.hexlet.io/null', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
+    expect(err).not.toBe(undefined);
   });
 });
 
 test('Test that fucntion throw error becouse catch 404 error', async () => {
   nockedUrl('https://ru.hexlet.io', '/abc', response, 404);
   await savePage('https://ru.hexlet.io/abc', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
+    expect(err).not.toBe(undefined);
   });
 });
 
 test('Test that function throw error becouse catch 500 error', async () => {
   nockedUrl('https://ru.hexlet.io', '/a', response, 500);
   await savePage('https://ru.hexlet.io/a', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
+    expect(err).not.toBe(undefined);
   });
 });
 
 test('Test that function throw error becouse _files directory has already exist', async () => {
   await savePage(url, dirpath);
   await savePage(url, dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
+    expect(err).not.toBe(undefined);
   });
 });
 
 test('Test that function save and changes links in .html file', async () => {
-  const htmlFilepath = await savePage(url, dirpath);
+  const [htmlFilepath] = await savePage(url, dirpath);
   log('Html filepath is', htmlFilepath);
   const readenData = await fs.readFile(htmlFilepath, 'utf8');
   const htmlFileAfter = await getFixturesFile('pageAfter.html');
@@ -132,6 +132,6 @@ test('Test that function save and changes links in .html file', async () => {
 test('Test that function normal work with null response', async () => {
   nockedUrl('https://ru.hexlet.io', '/b', undefined);
   await savePage('https://ru.hexlet.io/b', dirpath).catch((err) => {
-    expect(err).toEqual(undefined);
+    expect(err).not.toBe(undefined);
   });
 });

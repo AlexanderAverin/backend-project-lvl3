@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import Listr from 'listr';
 import { Command } from 'commander/esm.mjs';
 
 import savePage from '../src/pageSaver.js';
@@ -32,7 +33,7 @@ const errorHandler = (error) => {
     errorCode = error.code;
   }
 
-  return mapping[errorCode]();
+  mapping[errorCode]();
 };
 
 program
@@ -48,9 +49,11 @@ program
 
     savePage(url, output).catch((error) => {
       errorHandler(error);
-    }).then((htmlFilepath) => {
-      console.log(`Page was successfully downloaded into ${htmlFilepath}`);
-    });
+    })
+      .then(([htmlFilepath, tasksList]) => {
+        new Listr(tasksList, { concurrent: true }).run();
+        console.log(`Page was successfully downloaded into ${htmlFilepath}`);
+      });
   });
 
 program.parse(process.argv);

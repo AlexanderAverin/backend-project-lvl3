@@ -1,17 +1,17 @@
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 /* eslint-disable func-names */
+
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import debug from 'debug';
-import Listr from 'listr';
+
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
 
 const pathsLog = debug('page-loader');
-
 pathsLog.color = 270;
 
 const load = (url) => {
@@ -47,7 +47,6 @@ const getFilename = (mainUrl, resourseUrl = '') => {
 
   const extnameFromUrl = path.extname(formatedUrl);
   const fileExtname = formatedUrl.endsWith('/') || path.extname(formatedUrl.split('/').slice(-1).join('')) === '' ? '.html' : extnameFromUrl;
-  pathsLog('File extname: %o', fileExtname);
 
   const urlWithoutExtname = formatedUrl.endsWith('/')
     ? formatedUrl.slice(0, -1)
@@ -58,77 +57,79 @@ const getFilename = (mainUrl, resourseUrl = '') => {
 
 const formatDocument = (mainUrl, document, filesDirpath) => {
   const $ = cheerio.load(document);
-  // const resoursesList = [];
   const mapping = {
     img: 'src',
     script: 'src',
     link: 'href',
   };
-  // resoursesList: [<imageUrl>, <name>]
+  // resoursesList: { <imageUrl>, <name> }
   const tags = ['img', 'script', 'link'];
-  const resoursesList = tags.flatMap((tag) => $(tag).map(function () {
-    const { pathname } = new URL(mainUrl);
-    const resourseData = $(this).attr(mapping[tag]) ?? '';
-    pathsLog('Filepath: %o', resourseData);
-    const resourse = isAbsolutePath(resourseData)
-      ? resourseData
-      : new URL(path.join(pathname, resourseData), mainUrl).href;
-      // Check that main url host equal resourse url host
-    if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
-      const name = getFilename(mainUrl, resourse);
-      $(this).attr(mapping[tag], path.join(filesDirpath, name));
-      return { resourseUrl: resourse, name };
-    }
-    return [];
-  }).get());
+  const iter = (tagsList, acc) => {
+    const tag = tagsList[tagsList.length - 1];
+    const resoursesFromCurrentTag = $(tag).map(function () {
+      const { pathname } = new URL(mainUrl);
+      const resourseData = $(this).attr(mapping[tag]) ?? '';
 
+      pathsLog('Filepath: %o', resourseData);
+
+      const resourse = isAbsolutePath(resourseData)
+        ? resourseData
+        : new URL(path.join(pathname, resourseData), mainUrl).href;
+      // Check that main url host equal resourse url host
+      if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
+        const name = getFilename(mainUrl, resourse);
+        $(this).attr(mapping[tag], path.join(filesDirpath, name));
+        return { resourseUrl: resourse, name };
+      }
+      // Default return. Outside .flat() deletes emtyes arrays ([])
+      return [];
+    }).toArray();
+
+    if (tagsList.length === 0) {
+      return acc.flat();
+    }
+    return iter(tagsList.slice(0, -1), [...acc, resoursesFromCurrentTag]);
+  };
+  const resoursesList = iter(tags, []);
   return { formatedDocument: $.html(), resoursesList };
 };
 
 const savePage = (url, dirpath) => {
-  const tasksList = [];
+  let tasksList;
   const htmlFilepath = path.join(dirpath, getFilename(url));
-  pathsLog('Html filepath: %o', htmlFilepath);
   return load(url).then((response) => {
-    if (!response) {
-      throw new Error('Page not response');
-    }
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
     } = formatDocument(url, response.data, filesDirectoryPath);
 
-    const promise1 = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
+    const writeFilePromise = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
       throw err;
     });
-    const promise2 = fs.mkdir(filesDirectoryPath).catch((err) => {
+    const makeDirPromise = fs.mkdir(filesDirectoryPath).catch((err) => {
       throw err;
     });
 
     pathsLog('list: %o', resoursesList);
-    resoursesList.forEach(({ resourseUrl, name }) => {
+
+    tasksList = resoursesList.flatMap(({ resourseUrl, name }) => {
       if (path.extname(resourseUrl) === '.html') {
         return savePage(resourseUrl);
       }
-      if (resourseUrl.slice(-1) !== '/') {
-        tasksList.push({
-          title: resourseUrl,
-          task: () => load(resourseUrl).then((resurseResponse) => {
-            const imageFilepath = path.join(filesDirectoryPath, name);
-            fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
-              throw err;
-            });
-          }),
-        });
-      }
+      return {
+        title: name,
+        task: () => load(resourseUrl).then((resurseResponse) => {
+          const imageFilepath = path.join(filesDirectoryPath, name);
+          fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
+            throw err;
+          });
+        }),
+      };
     });
 
-    return Promise.all([promise1, promise2]);
+    return Promise.all([writeFilePromise, makeDirPromise]);
   })
-    .then(() => (tasksList.length !== 0 ? new Listr(tasksList, { concurrent: true }).run() : '')).catch((err) => {
-      throw err;
-    })
-    .then(() => Promise.resolve(htmlFilepath));
+    .then(() => Promise.all([Promise.resolve(htmlFilepath), Promise.resolve(tasksList)]));
 };
 
 export default savePage;
