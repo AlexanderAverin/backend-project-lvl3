@@ -78,6 +78,10 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
         const name = getFilename(mainUrl, resourse);
+        const pathToChange = path.join(filesDirpath, name).startsWith(process.cwd())
+          ? path.join(filesDirpath, name)
+          : path.join(process.cwd(), path.join(filesDirpath, name));
+
         $(this).attr(mapping[tag], path.join(filesDirpath, name));
         return { resourseUrl: resourse, name };
       }
