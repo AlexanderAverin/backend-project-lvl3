@@ -14,15 +14,19 @@ const isFileSystemError = (error) => (error.code !== undefined);
 const errorHandler = (error) => {
   const mapping = {
     404: () => {
-      console.error(`ERROR\n${error.config.url} not found (error 404)`);
+      console.error(`ERROR:\n${error.config.url} not found (error 404)`);
       process.exit(1);
     },
     500: () => {
-      console.error(`ERROR\n${error.config.url} internal server error`);
+      console.error(`ERROR:\n${error.config.url} internal server error`);
       process.exit(1);
     },
     EEXIST: () => {
-      console.error(`ERROR\n${error.path} directory has already exist`);
+      console.error(`ERROR:\n${error.path} directory has already exist`);
+      process.exit(1);
+    },
+    noResponse: () => {
+      console.error(`ERROR:\n${error.url} page no response`);
       process.exit(1);
     },
   };
@@ -32,6 +36,7 @@ const errorHandler = (error) => {
   } else if (isFileSystemError(error)) {
     errorCode = error.code;
   }
+  errorCode = error.text;
 
   mapping[errorCode]();
 };

@@ -98,10 +98,13 @@ const savePage = (url, dirpath) => {
   let tasksList;
   const htmlFilepath = path.join(dirpath, getFilename(url));
   return load(url).then((response) => {
+    if (!response || !response.data) {
+      throw new Error('noResponse', { url });
+    }
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
-    } = formatDocument(url, response.data ?? '', filesDirectoryPath);
+    } = formatDocument(url, response.data, filesDirectoryPath);
 
     const writeFilePromise = fs.writeFile(htmlFilepath, formatedDocument).catch((err) => {
       throw err;
@@ -114,13 +117,16 @@ const savePage = (url, dirpath) => {
 
     tasksList = resoursesList.flatMap(({ resourseUrl, name }) => {
       if (path.extname(resourseUrl) === '.html') {
-        return savePage(resourseUrl);
+        return savePage(resourseUrl, dirpath);
       }
       return {
         title: name,
         task: () => load(resourseUrl).then((resurseResponse) => {
+          if (!resurseResponse || !resurseResponse.data) {
+            throw new Error('noResponse', { url: resurseResponse });
+          }
           const imageFilepath = path.join(filesDirectoryPath, name);
-          fs.writeFile(imageFilepath, resurseResponse.data ?? '').catch((err) => {
+          fs.writeFile(imageFilepath, resurseResponse.data).catch((err) => {
             throw err;
           });
         }),
