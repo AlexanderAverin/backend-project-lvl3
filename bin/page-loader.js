@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/* eslint-disable consistent-return */
 
 import Listr from 'listr';
 import { Command } from 'commander/esm.mjs';
 
+import path from 'path';
 import savePage from '../src/pageSaver.js';
 
 const program = new Command();
@@ -12,23 +12,25 @@ const isAxiosError = (error) => (error.response !== undefined);
 
 const isFileSystemError = (error) => (error.code !== undefined);
 
+const isAbsoluteDirpath = (dirpath) => dirpath.startsWith(process.cwd());
+
 const errorHandler = (error) => {
   const mapping = {
     404: () => {
-      console.error(`ERROR:\n${error.config.url} not found (error 404)`);
+      console.error(`ERROR:\n\t${error.config.url} not found (error 404)`);
       process.exit(1);
     },
     500: () => {
-      console.error(`ERROR:\n${error.config.url} internal server error`);
+      console.error(`ERROR:\n\t${error.config.url} internal server error`);
       process.exit(1);
     },
     EEXIST: () => {
-      console.error(`ERROR:\n${error.path} directory has already exist`);
+      console.error(`ERROR:\n\t${error.path} directory has already exist`);
       process.exit(1);
     },
 
     EPERM: () => {
-      console.error(`ERROR:\n${error.path} operation not permised`);
+      console.error(`ERROR:\n\t${error.path} operation not permised`);
       process.exit(1);
     },
   };
@@ -38,6 +40,7 @@ const errorHandler = (error) => {
   if (isFileSystemError(error)) {
     return mapping[error.code]();
   }
+  throw error;
 };
 
 program
@@ -50,13 +53,16 @@ program
     const options = program.opts();
 
     const { output } = options;
+    const dirpath = isAbsoluteDirpath(output) ? output : path.join(process.cwd(), output);
 
-    savePage(url, output).catch((error) => {
+    savePage(url, dirpath).catch((error) => {
       errorHandler(error);
     })
-      .then(([htmlFilepath, tasksList]) => {
-        new Listr(tasksList, { concurrent: true }).run();
-        console.log(`Page was successfully downloaded into ${htmlFilepath}`);
+      .then(([htmlFilepath, tasksListForListr]) => {
+        const tasks = new Listr(tasksListForListr, { concurrent: true });
+        tasks.run().then(() => {
+          console.log(`Page was successfully downloaded into ${htmlFilepath}`);
+        });
       });
   });
 

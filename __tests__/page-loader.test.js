@@ -1,6 +1,6 @@
 /* eslint-disable func-names */
 import {
-  test, expect, beforeEach,
+  test, expect, beforeEach, jest,
 } from '@jest/globals';
 
 import os from 'os';
@@ -50,6 +50,9 @@ beforeEach(async () => {
   nockedUrl(url, '/courses', '');
   nockedUrl('https://js.stripe.com', '/v3', '');
   nockedUrl('https://ru.hexlet.io', '/packs/js/runtime.js', '');
+
+  const spy = jest.spyOn(process, 'cwd');
+  spy.mockReturnValue(dirpath);
 });
 
 test('Test that function create html file', async () => {
@@ -68,34 +71,6 @@ test('Test that fuction create directory with page resourses', async () => {
     return stat.isDirectory();
   });
   expect(dirs.includes('ru-hexlet-io-courses_files')).toBeTruthy();
-});
-
-test('Test that function hand fs write file error', async () => {
-  nockedUrl('https://ru.hexlet.io', '/null', null);
-  await savePage('https://ru.hexlet.io/null', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
-  });
-});
-
-test('Test that fucntion throw error becouse catch 404 error', async () => {
-  nockedUrl('https://ru.hexlet.io', '/abc', response, 404);
-  await savePage('https://ru.hexlet.io/abc', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
-  });
-});
-
-test('Test that function throw error becouse catch 500 error', async () => {
-  nockedUrl('https://ru.hexlet.io', '/a', response, 500);
-  await savePage('https://ru.hexlet.io/a', dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
-  });
-});
-
-test('Test that function throw error becouse _files directory has already exist', async () => {
-  await savePage(url, dirpath);
-  await savePage(url, dirpath).catch((err) => {
-    expect(err).not.toEqual(undefined);
-  });
 });
 
 test('Test that function save and changes links in .html file', async () => {
@@ -129,9 +104,25 @@ test('Test that function save and changes links in .html file', async () => {
   expect(readenData).toEqual(expectedResult);
 });
 
-test('Test that function normal work with page no response', async () => {
-  nockedUrl('https://ru.hexlet.io', '/', undefined);
-  await savePage('https://ru.hexlet.io', dirpath).catch((err) => {
-    expect(err.text).toEqual(new Error('noResponse').text);
+// Errors handling tests
+
+test('Test that fucntion throw error becouse catch 404 error', async () => {
+  nockedUrl(url, '/404Error', response, 404);
+  await savePage(path.join(url, '404Error'), dirpath).catch((error) => {
+    expect(error).not.toEqual(undefined);
+  });
+});
+
+test('Test that function throw error becouse catch 500 error', async () => {
+  nockedUrl(url, '/500Error', response, 500);
+  await savePage(path.join(url, '500Error'), dirpath).catch((error) => {
+    expect(error).not.toEqual(undefined);
+  });
+});
+
+test('Test that function throw error becouse _files directory has already exist', async () => {
+  await savePage(url, dirpath);
+  await savePage(url, dirpath).catch((err) => {
+    expect(err.code).toEqual('EEXIST');
   });
 });
