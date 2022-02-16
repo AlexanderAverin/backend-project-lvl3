@@ -72,10 +72,12 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
     $(tag).each(function () {
       const { pathname } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pathsLog('Filepath: %o', resourseData);
+      pathsLog('Original path or url: %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(path.join(pathname, resourseData), mainUrl).href;
+      pathsLog('Resourse: %o', resourse);
+
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
         const name = getFilename(mainUrl, resourse);
