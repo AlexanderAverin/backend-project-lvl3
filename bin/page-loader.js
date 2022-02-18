@@ -8,11 +8,11 @@ import savePage from '../src/pageSaver.js';
 
 const program = new Command();
 
+const isAbsoluteDirpath = (dirpath) => dirpath.startsWith(process.cwd());
+
 const isAxiosError = (error) => (error.response !== undefined);
 
 const isFileSystemError = (error) => (error.code !== undefined);
-
-const isAbsoluteDirpath = (dirpath) => dirpath.startsWith(process.cwd());
 
 const errorHandler = (error) => {
   const mapping = {
@@ -33,6 +33,11 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n\t${error.path} operation not permised`);
       process.exit(1);
     },
+
+    default: () => {
+      console.error('Undefined error');
+      process.exit(1);
+    },
   };
   if (isAxiosError(error)) {
     return mapping[error.response.status]();
@@ -40,7 +45,7 @@ const errorHandler = (error) => {
   if (isFileSystemError(error)) {
     return mapping[error.code]();
   }
-  throw error;
+  return mapping.default();
 };
 
 program

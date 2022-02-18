@@ -17,13 +17,25 @@ pathsLog.color = 270;
 const formatDirpath = (dirpath) => (dirpath.startsWith(process.cwd())
   ? dirpath : path.join(process.cwd(), dirpath));
 
+const union = (pathname, resourseUrl) => {
+  const splitPathname = pathname.split(path.sep);
+  const splitResourseUrl = resourseUrl.split(path.sep);
+
+  pathsLog('union %o', [...splitPathname, ...splitResourseUrl]);
+
+  const mergedArrays = [...splitPathname, ...splitResourseUrl].reduce((acc, item) => (
+    !acc.includes(item) && item !== '' ? [...acc, item] : acc), []).join('/');
+  pathsLog('union after %o', mergedArrays);
+  return mergedArrays;
+};
+
 const load = (url) => {
   const mapping = {
-    json: () => axios.get(url, { responseType: 'json' }).catch((err) => {
-      throw err;
+    json: () => axios.get(url, { responseType: 'json' }).catch((error) => {
+      throw error;
     }),
-    stream: () => axios.get(url, { responseType: 'stream' }).catch((err) => {
-      throw err;
+    stream: () => axios.get(url, { responseType: 'stream' }).catch((error) => {
+      throw error;
     }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
@@ -75,7 +87,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
       pathsLog('Original path or url: %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
-        : new URL(path.join(pathname, resourseData), mainUrl).href;
+        : new URL(union(pathname, resourseData), mainUrl).href;
       pathsLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
@@ -92,8 +104,8 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 
 const savePage = (url, dirpath) => {
   const absoluteDirpath = formatDirpath(dirpath);
-  let initDirPromise = Promise.resolve('');
   let tasksList = [];
+  let initPromise = Promise.resolve('');
   const htmlFilepath = path.join(absoluteDirpath, getFilename(url));
   return load(url).then((response) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
@@ -102,7 +114,7 @@ const savePage = (url, dirpath) => {
     } = formatDocument(url, response.data, filesDirectoryPath);
 
     if (dirpath !== process.cwd() && dirpath !== './') {
-      initDirPromise = fs.mkdir(absoluteDirpath).catch((error) => {
+      initPromise = fs.mkdir(absoluteDirpath).catch((error) => {
         throw error;
       });
     }
@@ -130,7 +142,7 @@ const savePage = (url, dirpath) => {
       return promise;
     });
 
-    return Promise.all([writeFilePromise, makeDirPromise, initDirPromise]);
+    return Promise.all([writeFilePromise, makeDirPromise, initPromise]);
   })
     .then(() => Promise.all([Promise.resolve(htmlFilepath), Promise.resolve(tasksList)]));
 };

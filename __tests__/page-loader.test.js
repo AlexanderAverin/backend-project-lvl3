@@ -32,6 +32,7 @@ nock.disableNetConnect();
 let dirpath;
 let response;
 let url;
+let mainUrl;
 let imagePath;
 let exampleImage;
 
@@ -39,15 +40,16 @@ beforeEach(async () => {
   dirpath = await fs
     .mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
+  mainUrl = 'https://ru.hexlet.io';
   url = 'https://ru.hexlet.io/courses';
   response = await getFixturesFile('pageBefore.html');
-  imagePath = '/assets/professions/nodejs.png';
+  imagePath = '/courses/assets/professions/nodejs.png';
   exampleImage = await getFixturesFile('nodejs.png', 'binary');
-  nockedUrl(url, '', response);
-  nockedUrl(url, imagePath, exampleImage);
+  nockedUrl(mainUrl, '/courses', response);
+  nockedUrl(mainUrl, imagePath, exampleImage);
   nockedUrl('https://cdn2.hexlet.io', '/assets/menu.css', '');
-  nockedUrl(url, '/assets/application.css', '');
-  nockedUrl(url, '/courses', '');
+  nockedUrl(mainUrl, '/courses/assets/application.css', '');
+  nockedUrl(mainUrl, '/courses', '');
   nockedUrl('https://js.stripe.com', '/v3', '');
   nockedUrl('https://ru.hexlet.io', '/packs/js/runtime.js', '');
 
@@ -59,7 +61,6 @@ test('Test that function create html file', async () => {
   await savePage(url, dirpath);
   const filesList = await fs.readdir(dirpath);
   log('files list', filesList);
-
   expect(filesList.includes('ru-hexlet-io-courses.html')).toBeTruthy();
 });
 
@@ -87,7 +88,7 @@ test('Test that function save and changes links in .html file', async () => {
     script: 'src',
     link: 'href',
   };
-  // Change paths in expected html (dirpath + <name>)
+    // Change paths in expected html (dirpath + <name>)
   tagsList.forEach((tag) => {
     $(tag).each(function () {
       const resourseUrl = $(this).attr(mapping[tag]);
