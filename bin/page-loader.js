@@ -33,6 +33,10 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n\t${error.path} read only (system files and directories)`);
       process.exit(1);
     },
+    ENOENT: () => {
+      console.error(`ERROR:\n\t${error.path} is not exist`);
+      process.exit(1);
+    },
     default: () => {
       console.error('Undefined error');
       process.exit(1);
