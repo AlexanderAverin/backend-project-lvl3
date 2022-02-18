@@ -99,7 +99,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
   return { formatedDocument: $.html(), resoursesList };
 };
 
-const savePage = (url, dirpath) => {
+const savePage = (url, dirpath = process.cwd()) => {
   let tasksList = [];
   const htmlFilepath = path.join(dirpath, getFilename(url));
   return load(url).then((response) => {
