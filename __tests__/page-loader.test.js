@@ -12,7 +12,7 @@ import debug from 'debug';
 
 import savePage from '../src/pageSaver.js';
 
-const log = debug('page-loader-test');
+const log = debug('page-loader');
 
 log.color = 270;
 
@@ -125,5 +125,11 @@ test('Test that function throw error becouse _files directory has already exist'
   await savePage(url, dirpath);
   await savePage(url, dirpath).catch((err) => {
     expect(err.code).toEqual('EEXIST');
+  });
+});
+
+test('Test that function throw error becouse directory not exist', async () => {
+  await savePage(url, path.join(dirpath, 'downloads')).catch((error) => {
+    expect(error.code).toEqual('ENOENT');
   });
 });
