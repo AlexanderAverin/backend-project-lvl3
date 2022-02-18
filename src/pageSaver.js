@@ -101,19 +101,12 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 
 const savePage = (url, dirpath) => {
   let tasksList = [];
-  let initPromise = Promise.resolve('');
   const htmlFilepath = path.join(dirpath, getFilename(url));
   return load(url).then((response) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
     } = formatDocument(url, response.data, filesDirectoryPath);
-
-    if (dirpath !== process.cwd() && dirpath !== './') {
-      initPromise = fs.mkdir(dirpath).catch((error) => {
-        throw error;
-      });
-    }
 
     const writeFilePromise = fs.writeFile(htmlFilepath, formatedDocument).catch((error) => {
       throw error;
@@ -138,7 +131,7 @@ const savePage = (url, dirpath) => {
       return promise;
     });
 
-    return Promise.all([writeFilePromise, makeDirPromise, initPromise]);
+    return Promise.all([writeFilePromise, makeDirPromise]);
   })
     .then(() => Promise.all([Promise.resolve(htmlFilepath), Promise.resolve(tasksList)]));
 };
