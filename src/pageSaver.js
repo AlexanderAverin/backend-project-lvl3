@@ -14,9 +14,6 @@ import axiosDebug from 'axios-debug-log';
 const pathsLog = debug('page-loader');
 pathsLog.color = 270;
 
-const formatDirpath = (dirpath) => (dirpath.startsWith(process.cwd())
-  ? dirpath : path.join(process.cwd(), dirpath));
-
 const union = (pathname, resourseUrl) => {
   const splitPathname = pathname.split(path.sep);
   const splitResourseUrl = resourseUrl.split(path.sep);
@@ -103,10 +100,9 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 };
 
 const savePage = (url, dirpath) => {
-  const absoluteDirpath = formatDirpath(dirpath);
   let tasksList = [];
   let initPromise = Promise.resolve('');
-  const htmlFilepath = path.join(absoluteDirpath, getFilename(url));
+  const htmlFilepath = path.join(dirpath, getFilename(url));
   return load(url).then((response) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
@@ -114,7 +110,7 @@ const savePage = (url, dirpath) => {
     } = formatDocument(url, response.data, filesDirectoryPath);
 
     if (dirpath !== process.cwd() && dirpath !== './') {
-      initPromise = fs.mkdir(absoluteDirpath).catch((error) => {
+      initPromise = fs.mkdir(dirpath).catch((error) => {
         throw error;
       });
     }

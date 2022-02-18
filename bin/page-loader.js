@@ -3,12 +3,9 @@
 import Listr from 'listr';
 import { Command } from 'commander/esm.mjs';
 
-import path from 'path';
 import savePage from '../src/pageSaver.js';
 
 const program = new Command();
-
-const isAbsoluteDirpath = (dirpath) => dirpath.startsWith(process.cwd());
 
 const isAxiosError = (error) => (error.response !== undefined);
 
@@ -28,12 +25,14 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n\t${error.path} directory has already exist`);
       process.exit(1);
     },
-
     EPERM: () => {
       console.error(`ERROR:\n\t${error.path} operation not permised`);
       process.exit(1);
     },
-
+    EROFS: () => {
+      console.error(`ERROR:\n\t${error.path} read only (system files and directories)`);
+      process.exit(1);
+    },
     default: () => {
       console.error('Undefined error');
       process.exit(1);
@@ -58,9 +57,8 @@ program
     const options = program.opts();
 
     const { output } = options;
-    const dirpath = isAbsoluteDirpath(output) ? output : path.join(process.cwd(), output);
 
-    savePage(url, dirpath).catch((error) => {
+    savePage(url, output).catch((error) => {
       errorHandler(error);
     })
       .then(([htmlFilepath, tasksListForListr]) => {
