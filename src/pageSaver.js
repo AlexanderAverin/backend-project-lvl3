@@ -87,7 +87,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
       pathsLog('Original path or url: %o', resourseData);
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
-        : new URL(union(pathname, resourseData), mainUrl).href;
+        : new URL(union(pathname, resourseData), new URL(mainUrl).origin).href;
       pathsLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
