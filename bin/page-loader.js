@@ -21,6 +21,10 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n\t${error.config.url} internal server error`);
       process.exit(1);
     },
+    ENOENT: () => {
+      console.error(`ERROR:\n\t${error.path} is not exist`);
+      process.exit(1);
+    },
     EEXIST: () => {
       console.error(`ERROR:\n\t${error.path} directory has already exist`);
       process.exit(1);
@@ -31,10 +35,6 @@ const errorHandler = (error) => {
     },
     EROFS: () => {
       console.error(`ERROR:\n\t${error.path} read only (system files and directories)`);
-      process.exit(1);
-    },
-    ENOENT: () => {
-      console.error(`ERROR:\n\t${error.path} is not exist`);
       process.exit(1);
     },
     default: () => {
@@ -59,7 +59,6 @@ program
 
   .action((url) => {
     const options = program.opts();
-
     const { output } = options;
 
     savePage(url, output).catch((error) => {

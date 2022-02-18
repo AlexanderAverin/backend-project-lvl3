@@ -108,10 +108,14 @@ const savePage = (url, dirpath) => {
       formatedDocument, resoursesList,
     } = formatDocument(url, response.data, filesDirectoryPath);
 
+    const readDirectoryPromise = fs.readdir(dirpath).catch((error) => {
+      throw error;
+    });
+
     const writeFilePromise = fs.writeFile(htmlFilepath, formatedDocument).catch((error) => {
       throw error;
     });
-    const makeDirPromise = fs.mkdir(filesDirectoryPath).catch((error) => {
+    const makefFilesDirPromise = fs.mkdir(filesDirectoryPath).catch((error) => {
       throw error;
     });
 
@@ -131,7 +135,7 @@ const savePage = (url, dirpath) => {
       return promise;
     });
 
-    return Promise.all([writeFilePromise, makeDirPromise]);
+    return Promise.all([writeFilePromise, makefFilesDirPromise, readDirectoryPromise]);
   })
     .then(() => Promise.all([Promise.resolve(htmlFilepath), Promise.resolve(tasksList)]));
 };
