@@ -67,7 +67,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
   return `${urlWithoutExtname.replace(searchRegexp, '-')}${fileExtname}`;
 };
 
-const formatDocument = (mainUrl, document, filesDirpath) => {
+const formatDocument = (mainUrl, document, filesDirectoryName) => {
   const $ = cheerio.load(document);
   let resoursesList = [];
   const mapping = {
@@ -91,7 +91,7 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
         const name = getFilename(mainUrl, resourse);
         resoursesList = [...resoursesList, { resourseUrl: resourse, name }];
-        $(this).attr(mapping[tag], path.join(filesDirpath, name));
+        $(this).attr(mapping[tag], path.join(filesDirectoryName, name));
       }
     });
   });
@@ -100,24 +100,26 @@ const formatDocument = (mainUrl, document, filesDirpath) => {
 };
 
 const savePage = (url, dirpath = process.cwd()) => {
+  const initPromise = fs.readdir(dirpath).catch((error) => {
+    throw error;
+  });
   let tasksList = [];
-  const htmlFilepath = path.join(dirpath, getFilename(url));
-  return load(url).then((response) => {
+  let fsPromises;
+  const htmlFilepath = getFilename(url);
+  return Promise.all([initPromise, load(url).then((response) => {
     const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
     const {
       formatedDocument, resoursesList,
     } = formatDocument(url, response.data, filesDirectoryPath);
 
-    const readDirectoryPromise = fs.readdir(dirpath).catch((error) => {
-      throw error;
-    });
-
-    const writeFilePromise = fs.writeFile(htmlFilepath, formatedDocument).catch((error) => {
-      throw error;
-    });
-    const makefFilesDirPromise = fs.mkdir(filesDirectoryPath).catch((error) => {
-      throw error;
-    });
+    const writeFilePromise = fs
+      .writeFile(path.join(dirpath, htmlFilepath), formatedDocument).catch((error) => {
+        throw error;
+      });
+    const makefFilesDirPromise = fs
+      .mkdir(path.join(dirpath, filesDirectoryPath)).catch((error) => {
+        throw error;
+      });
 
     pathsLog('list: %o', resoursesList);
 
@@ -126,8 +128,8 @@ const savePage = (url, dirpath = process.cwd()) => {
         return savePage(resourseUrl);
       }
       const promise = load(resourseUrl).then((resurseResponse) => {
-        const imageFilepath = path.join(filesDirectoryPath, name);
-        fs.writeFile(imageFilepath, resurseResponse.data).catch((error) => {
+        const resourseFilepath = path.join(dirpath, filesDirectoryPath, name);
+        fs.writeFile(resourseFilepath, resurseResponse.data).catch((error) => {
           throw error;
         });
       });
@@ -135,9 +137,11 @@ const savePage = (url, dirpath = process.cwd()) => {
       return promise;
     });
 
-    return Promise.all([writeFilePromise, makefFilesDirPromise, readDirectoryPromise]);
-  })
-    .then(() => Promise.all([Promise.resolve(htmlFilepath), Promise.resolve(tasksList)]));
+    fsPromises = Promise.all([writeFilePromise, makefFilesDirPromise]);
+  })])
+    .then(() => Promise.all(
+      [Promise.resolve(path.join(dirpath, htmlFilepath)), Promise.resolve(tasksList), fsPromises],
+    ));
 };
 
 export default savePage;
