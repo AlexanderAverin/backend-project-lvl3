@@ -11,8 +11,8 @@ import debug from 'debug';
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
 
-const pathsLog = debug('page-loader');
-pathsLog.color = 270;
+const pageLoaderLog = debug('page-loader');
+pageLoaderLog.color = 270;
 
 const union = (pathname, resourseUrl) => {
   const splitPathname = pathname.split(path.sep);
@@ -71,17 +71,17 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
     $(tag).each(function () {
       const { pathname, origin } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pathsLog('Original path or url: %o', resourseData);
-      pathsLog('Is absolute path %o', isAbsolutePath(resourseData));
+      // pageLoaderLog('Original path or url: %o', resourseData);
+      // pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(resourseData, origin).href;
-      pathsLog('Resourse: %o', resourse);
+      // pageLoaderLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
         const name = getFilename(resourse);
-        pathsLog('name is %o', name);
+        pageLoaderLog('name is %o', name);
         resoursesList = [...resoursesList, { resourseUrl: resourse, name }];
         $(this).attr(mapping[tag], path.join(filesDirectoryName, name));
       }
@@ -100,14 +100,15 @@ const savePage = (url, dirpath = process.cwd()) => {
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
 
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData ?? '')
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
       const loadPromise = load(resourseUrl).then(({ data }) => {
+        pageLoaderLog('Resourse data: %o', data);
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), data ?? '');
+        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
     }))
