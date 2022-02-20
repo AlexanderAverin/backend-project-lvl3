@@ -97,7 +97,7 @@ const savePage = (url, dirpath = process.cwd()) => {
   let tasksListForListr = [];
 
   return load(url)
-    .then((response = { data: '' }) => {
+    .then((response) => {
       const {
         htmlData, resoursesList,
       } = formatDocument(url, response.data, resoursesDirectoryPath);
@@ -107,7 +107,7 @@ const savePage = (url, dirpath = process.cwd()) => {
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
-      const loadPromise = load(resourseUrl).then((response = { data: '' }) => {
+      const loadPromise = load(resourseUrl).then((response) => {
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return fs.writeFile(path.join(dirpath, resourseFilepath), response.data);
       });
