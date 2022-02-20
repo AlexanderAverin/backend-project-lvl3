@@ -110,7 +110,6 @@ const savePage = (url, dirpath = process.cwd()) => {
         return fs.writeFile(path.join(dirpath, resourseFilepath), data);
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
-      return loadPromise;
     }))
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
