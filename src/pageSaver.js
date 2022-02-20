@@ -71,12 +71,12 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
     $(tag).each(function () {
       const { pathname, origin } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      // pageLoaderLog('Original path or url: %o', resourseData);
-      // pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
+      pageLoaderLog('Original path or url: %o', resourseData);
+      pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(resourseData, origin).href;
-      // pageLoaderLog('Resourse: %o', resourse);
+      pageLoaderLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
@@ -97,20 +97,22 @@ const savePage = (url, dirpath = process.cwd()) => {
   let tasksListForListr = [];
 
   return load(url)
-    .then(({ data }) => {
-      const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
+    .then((response = { data: '' }) => {
+      const {
+        htmlData, resoursesList,
+      } = formatDocument(url, response.data, resoursesDirectoryPath);
 
       return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
-      const loadPromise = load(resourseUrl).then(({ data }) => {
-        pageLoaderLog('Resourse data: %o', data);
+      const loadPromise = load(resourseUrl).then((response = { data: '' }) => {
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+        return fs.writeFile(path.join(dirpath, resourseFilepath), response.data);
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
+      return loadPromise;
     }))
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
