@@ -70,7 +70,7 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
   tags.forEach((tag) => {
     $(tag).each(function () {
       const { pathname, origin } = new URL(mainUrl);
-      const resourseData = $(this).attr(mapping[tag]);
+      const resourseData = $(this).attr(mapping[tag]) ?? '';
       pathsLog('Original path or url: %o', resourseData);
       pathsLog('Is absolute path %o', isAbsolutePath(resourseData));
       const resourse = isAbsolutePath(resourseData)
@@ -100,14 +100,14 @@ const savePage = (url, dirpath = process.cwd()) => {
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
 
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData ?? '')
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
       const loadPromise = load(resourseUrl).then(({ data }) => {
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+        return fs.writeFile(path.join(dirpath, resourseFilepath), data ?? '');
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
     }))
