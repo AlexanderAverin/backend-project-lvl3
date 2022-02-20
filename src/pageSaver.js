@@ -25,12 +25,12 @@ const union = (pathname, resourseUrl) => {
 
 const load = (url) => {
   const mapping = {
-    json: () => axios.get(url, { responseType: 'json' }),
+    json: () => axios.get(url),
     stream: () => axios.get(url, { responseType: 'stream' }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
-  const urlObject = new URL(url);
-  const dataType = binaryDataExtnames.includes(path.extname(urlObject.pathname)) ? 'stream' : 'json';
+  const { pathname } = new URL(url);
+  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'stream' : 'json';
 
   return mapping[dataType]();
 };
@@ -97,19 +97,17 @@ const savePage = (url, dirpath = process.cwd()) => {
   let tasksListForListr = [];
 
   return load(url)
-    .then((response) => {
-      const {
-        htmlData, resoursesList,
-      } = formatDocument(url, response.data, resoursesDirectoryPath);
+    .then(({ data }) => {
+      const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
 
       return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
-      const loadPromise = load(resourseUrl).then((response) => {
+      const loadPromise = load(resourseUrl).then(({ data }) => {
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), response.data);
+        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
       return loadPromise;
