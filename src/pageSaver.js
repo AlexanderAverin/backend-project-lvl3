@@ -14,6 +14,12 @@ import axiosDebug from 'axios-debug-log';
 const pathsLog = debug('page-loader');
 pathsLog.color = 270;
 
+const isImage = (url) => {
+  const isJpg = url.endsWith('.jpg');
+  const isPng = url.endsWith('.png');
+  return isJpg || isPng;
+};
+
 const union = (pathname, resourseUrl) => {
   const splitPathname = pathname.split(path.sep);
   const splitResourseUrl = resourseUrl.split(path.sep);
@@ -49,7 +55,7 @@ const getFilename = (mainUrl, resourseUrl = '') => {
   const searchRegexp = /[^\s\w\d]/g;
   const { hostname, pathname } = new URL(mainUrl);
   // Check that resourse url not equal null and main url not equal resourse url
-  const formatedUrl = resourseUrl === '' || new URL(mainUrl).href === new URL(resourseUrl).href || mainUrl === resourseUrl
+  const formatedUrl = (resourseUrl === '' || new URL(mainUrl).href === new URL(resourseUrl).href || mainUrl === resourseUrl) && !isImage(resourseUrl)
     ? path.join(hostname, pathname)
     : path.join(hostname, new URL(resourseUrl).pathname.replace(pathname, ''));
 
