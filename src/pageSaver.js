@@ -14,21 +14,12 @@ import axiosDebug from 'axios-debug-log';
 const pathsLog = debug('page-loader');
 pathsLog.color = 270;
 
-const isImage = (url) => {
-  const isJpg = url.endsWith('.jpg');
-  const isPng = url.endsWith('.png');
-  return isJpg || isPng;
-};
-
 const union = (pathname, resourseUrl) => {
   const splitPathname = pathname.split(path.sep);
   const splitResourseUrl = resourseUrl.split(path.sep);
 
-  pathsLog('union %o', [...splitPathname, ...splitResourseUrl]);
-
   const mergedArrays = [...splitPathname, ...splitResourseUrl].reduce((acc, item) => (
     !acc.includes(item) && item !== '' ? [...acc, item] : acc), []).join('/');
-  pathsLog('union after %o', mergedArrays);
   return mergedArrays;
 };
 
@@ -51,14 +42,11 @@ const isAbsolutePath = (filepath) => {
   return isStartsWithHttp || isStartsWithHttps;
 };
 
-const getFilename = (mainUrl, resourseUrl = '') => {
+const getFilename = (url) => {
   const searchRegexp = /[^\s\w\d]/g;
-  const { hostname, pathname } = new URL(mainUrl);
-  // Check that resourse url not equal null and main url not equal resourse url
-  const formatedUrl = (resourseUrl === '' || new URL(mainUrl).href === new URL(resourseUrl).href || mainUrl === resourseUrl) && !isImage(resourseUrl)
-    ? path.join(hostname, pathname)
-    : path.join(hostname, new URL(resourseUrl).pathname.replace(pathname, ''));
+  const { hostname, pathname } = new URL(url);
 
+  const formatedUrl = path.join(hostname, pathname);
   const extnameFromUrl = path.extname(formatedUrl);
   const fileExtname = formatedUrl.endsWith('/') || path.extname(formatedUrl.split('/').slice(-1).join('')) === '' ? '.html' : extnameFromUrl;
 
@@ -81,17 +69,19 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
   const tags = ['img', 'script', 'link'];
   tags.forEach((tag) => {
     $(tag).each(function () {
-      const { pathname } = new URL(mainUrl);
-      const resourseData = $(this).attr(mapping[tag]) ?? '';
+      const { pathname, origin } = new URL(mainUrl);
+      const resourseData = $(this).attr(mapping[tag]);
       pathsLog('Original path or url: %o', resourseData);
+      pathsLog('Is absolute path %o', isAbsolutePath(resourseData));
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
-        : new URL(union(pathname, resourseData), new URL(mainUrl).origin).href;
+        : new URL(resourseData, origin).href;
       pathsLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
-        const name = getFilename(mainUrl, resourse);
+        const name = getFilename(resourse);
+        pathsLog('name is %o', name);
         resoursesList = [...resoursesList, { resourseUrl: resourse, name }];
         $(this).attr(mapping[tag], path.join(filesDirectoryName, name));
       }
