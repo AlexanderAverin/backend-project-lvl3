@@ -61,14 +61,15 @@ program
     const options = program.opts();
     const { output } = options;
 
-    savePage(url, output).catch((error) => {
-      errorHandler(error);
-    })
-      .then(([htmlFilepath, tasksListForListr]) => {
+    savePage(url, output)
+      .then(({ htmlFilepath, tasksListForListr }) => {
         const tasks = new Listr(tasksListForListr, { concurrent: true });
         tasks.run().then(() => {
           console.log(`Page was successfully downloaded into ${htmlFilepath}`);
         });
+      })
+      .catch((error) => {
+        errorHandler(error);
       });
   });
 

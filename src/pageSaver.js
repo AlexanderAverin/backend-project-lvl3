@@ -28,12 +28,8 @@ const union = (pathname, resourseUrl) => {
 
 const load = (url) => {
   const mapping = {
-    json: () => axios.get(url, { responseType: 'json' }).catch((error) => {
-      throw error;
-    }),
-    stream: () => axios.get(url, { responseType: 'stream' }).catch((error) => {
-      throw error;
-    }),
+    json: () => axios.get(url, { responseType: 'json' }),
+    stream: () => axios.get(url, { responseType: 'stream' }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
   const urlObject = new URL(url);
@@ -96,52 +92,31 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
     });
   });
 
-  return { formatedDocument: $.html(), resoursesList };
+  return { htmlData: $.html(), resoursesList };
 };
 
 const savePage = (url, dirpath = process.cwd()) => {
-  const initPromise = fs.readdir(dirpath).catch((error) => {
-    throw error;
-  });
-  let tasksList = [];
-  let fsPromises;
   const htmlFilepath = getFilename(url);
-  return Promise.all([initPromise, load(url).then((response) => {
-    const filesDirectoryPath = htmlFilepath.replace('.html', '_files');
-    const {
-      formatedDocument, resoursesList,
-    } = formatDocument(url, response.data, filesDirectoryPath);
+  const resoursesDirectoryPath = htmlFilepath.replace('.html', '_files');
+  let tasksListForListr = [];
 
-    const writeFilePromise = fs
-      .writeFile(path.join(dirpath, htmlFilepath), formatedDocument).catch((error) => {
-        throw error;
+  return load(url)
+    .then(({ data }) => {
+      const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
+
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
+        .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
+        .then(() => resoursesList);
+    })
+    .then((list) => list.forEach(({ name, resourseUrl }) => {
+      const loadPromise = load(resourseUrl).then(({ data }) => {
+        const resourseFilepath = path.join(resoursesDirectoryPath, name);
+        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
       });
-    const makefFilesDirPromise = fs
-      .mkdir(path.join(dirpath, filesDirectoryPath)).catch((error) => {
-        throw error;
-      });
-
-    pathsLog('list: %o', resoursesList);
-
-    resoursesList.forEach(({ resourseUrl, name }) => {
-      if (path.extname(resourseUrl) === '.html') {
-        return savePage(resourseUrl);
-      }
-      const promise = load(resourseUrl).then((resurseResponse) => {
-        const resourseFilepath = path.join(dirpath, filesDirectoryPath, name);
-        fs.writeFile(resourseFilepath, resurseResponse.data).catch((error) => {
-          throw error;
-        });
-      });
-      tasksList = [...tasksList, { title: name, task: () => promise }];
-      return promise;
-    });
-
-    fsPromises = Promise.all([writeFilePromise, makefFilesDirPromise]);
-  })])
-    .then(() => Promise.all(
-      [Promise.resolve(path.join(dirpath, htmlFilepath)), Promise.resolve(tasksList), fsPromises],
-    ));
+      tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
+    }))
+    .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
+    .catch((error) => Promise.reject(error));
 };
 
 export default savePage;
