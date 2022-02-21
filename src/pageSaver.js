@@ -14,9 +14,7 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const isBinaryFile = (filepath) => (path.extname(filepath) === '.jpg' || path.extname(filepath) === '.png' || path.extname(filepath) === '.svg');
-
-const load = (url) => {
+const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
     stream: () => axios.get(url, { responseType: 'stream' }),
@@ -81,7 +79,7 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
     });
   });
 
-  return { htmlData: $.html(), resoursesList };
+  return { htmlData: $.root().html(), resoursesList };
 };
 
 const savePage = (url, dirpath = process.cwd()) => {
@@ -89,21 +87,20 @@ const savePage = (url, dirpath = process.cwd()) => {
   const resoursesDirectoryPath = htmlFilepath.replace('.html', '_files');
   let tasksListForListr = [];
 
-  return load(url)
+  return get(url)
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
 
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData, 'utf8')
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
     .then((list) => list.forEach(({ name, resourseUrl }) => {
-      const loadPromise = load(resourseUrl).then(({ data }) => {
-        pageLoaderLog('Resourse data: %o', data);
-        const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), data, isBinaryFile(resourseFilepath) ? 'binary' : 'utf8');
-      });
+      const loadPromise = get(resourseUrl);
+      const resourseFilepath = path.join(resoursesDirectoryPath, name);
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
+      return loadPromise
+        .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), data));
     }))
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
