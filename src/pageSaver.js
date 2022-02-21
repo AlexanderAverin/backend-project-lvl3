@@ -14,14 +14,7 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const union = (pathname, resourseUrl) => {
-  const splitPathname = pathname.split(path.sep);
-  const splitResourseUrl = resourseUrl.split(path.sep);
-
-  const mergedArrays = [...splitPathname, ...splitResourseUrl].reduce((acc, item) => (
-    !acc.includes(item) && item !== '' ? [...acc, item] : acc), []).join('/');
-  return mergedArrays;
-};
+const isBinaryFile = (filepath) => (path.extname(filepath) === '.jpg' || path.extname(filepath) === '.png' || path.extname(filepath) === '.svg');
 
 const load = (url) => {
   const mapping = {
@@ -29,8 +22,8 @@ const load = (url) => {
     stream: () => axios.get(url, { responseType: 'stream' }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
-  const urlObject = new URL(url);
-  const dataType = binaryDataExtnames.includes(path.extname(urlObject.pathname)) ? 'stream' : 'json';
+  const { pathname } = new URL(url);
+  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'stream' : 'json';
 
   return mapping[dataType]();
 };
@@ -100,7 +93,7 @@ const savePage = (url, dirpath = process.cwd()) => {
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
 
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData, 'utf8')
         .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
         .then(() => resoursesList);
     })
@@ -108,7 +101,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const loadPromise = load(resourseUrl).then(({ data }) => {
         pageLoaderLog('Resourse data: %o', data);
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+        return fs.writeFile(path.join(dirpath, resourseFilepath), data, isBinaryFile(resourseFilepath) ? 'binary' : 'utf8');
       });
       tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
     }))
