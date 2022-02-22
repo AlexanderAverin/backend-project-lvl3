@@ -93,13 +93,14 @@ const savePage = (url, dirpath = process.cwd()) => {
       return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
     })
 
-    .then((list) => fs.mkdir(resoursesDirectoryPath).then(() => Promise.resolve(list
+    .then((list) => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)).then(() => list
       .forEach(({ name, resourseUrl }) => {
         const getPromise = get(resourseUrl);
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
+        const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data }) => fs.writeFile(path.join(resoursesDirectoryPath, name), data));
-      }))))
+          .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), data));
+      })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
