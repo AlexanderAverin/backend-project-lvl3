@@ -99,7 +99,10 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), data));
+          .then(({ data }) => {
+            pageLoaderLog(data);
+            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+          });
       })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
