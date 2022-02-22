@@ -10,6 +10,7 @@ import debug from 'debug';
 
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
+import { IncomingMessage } from 'http';
 
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
@@ -99,12 +100,11 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data, request, config }) => {
-            pageLoaderLog('Name in get: %o', name);
-            pageLoaderLog('Data in get: %o', data);
-            pageLoaderLog('Request in get: %o', request);
-            pageLoaderLog('Config in get: %o', config);
-            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+          .then((response) => {
+            const dataToWrite = response.data instanceof IncomingMessage
+              ? response.body : response.data;
+            pageLoaderLog(dataToWrite);
+            return fs.writeFile(path.join(dirpath, resourseFilepath), dataToWrite);
           });
       })))
 
