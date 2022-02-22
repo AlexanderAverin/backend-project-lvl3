@@ -8,9 +8,10 @@ import axios from 'axios';
 import cheerio, { load } from 'cheerio';
 import debug from 'debug';
 
+import http from 'http';
+
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
-import { IncomingMessage } from 'http';
 
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
@@ -100,7 +101,11 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), data));
+          .then(({ data }) => {
+            pageLoaderLog('Data is', data, '\n');
+            pageLoaderLog('Is instance of IncomingMessege', data instanceof http.IncomingMessage);
+            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+          });
       })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
