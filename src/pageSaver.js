@@ -101,7 +101,7 @@ const savePage = (url, dirpath = process.cwd()) => {
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
           .then((response) => {
-            const dataToWrite = response.data instanceof IncomingMessage
+            const dataToWrite = response instanceof IncomingMessage
               ? response.body : response.data;
             pageLoaderLog(dataToWrite);
             return fs.writeFile(path.join(dirpath, resourseFilepath), dataToWrite);
