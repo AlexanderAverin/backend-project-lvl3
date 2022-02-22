@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 /* eslint-disable func-names */
@@ -7,8 +8,6 @@ import path from 'path';
 import axios from 'axios';
 import cheerio, { load } from 'cheerio';
 import debug from 'debug';
-
-import http from 'http';
 
 // Unused import (axiois debug)
 import axiosDebug from 'axios-debug-log';
@@ -92,7 +91,7 @@ const savePage = (url, dirpath = process.cwd()) => {
   return get(url)
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
+      return fs.writeFile(path.join(dirpath, htmlFilepath), JSON.stringify(htmlData)).then(() => resoursesList);
     })
 
     .then((list) => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)).then(() => list
@@ -101,11 +100,7 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data }) => {
-            pageLoaderLog('Data is', data, '\n');
-            pageLoaderLog('Is instance of IncomingMessege', data instanceof http.IncomingMessage);
-            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
-          });
+          .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), JSON.stringify(data)));
       })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
