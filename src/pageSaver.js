@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
 /* eslint-disable func-names */
@@ -91,7 +90,7 @@ const savePage = (url, dirpath = process.cwd()) => {
   return get(url)
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
-      return fs.writeFile(path.join(dirpath, htmlFilepath), JSON.stringify(htmlData)).then(() => resoursesList);
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
     })
 
     .then((list) => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)).then(() => list
@@ -100,7 +99,7 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), JSON.stringify(data)));
+          .then(({ data, config }) => fs.writeFile(path.join(dirpath, resourseFilepath), data, config.responseType === 'stream' ? 'binary' : 'utf8'));
       })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
