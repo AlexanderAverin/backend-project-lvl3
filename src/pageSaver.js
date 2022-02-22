@@ -90,7 +90,7 @@ const savePage = (url, dirpath = process.cwd()) => {
 
   return get(url)
     .then(({ data }) => {
-      const { htmlData, resoursesList } = formatDocument(url, data, path.join(dirpath, resoursesDirectoryPath));
+      const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
       return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
     })
 
