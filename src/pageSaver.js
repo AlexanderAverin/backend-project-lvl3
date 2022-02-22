@@ -5,7 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
-import cheerio from 'cheerio';
+import cheerio, { load } from 'cheerio';
 import debug from 'debug';
 
 // Unused import (axiois debug)
@@ -90,18 +90,17 @@ const savePage = (url, dirpath = process.cwd()) => {
   return get(url)
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
-
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
-        .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
-        .then(() => resoursesList);
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
     })
-    .then((list) => list.forEach(({ name, resourseUrl }) => {
-      const loadPromise = get(resourseUrl);
-      const resourseFilepath = path.join(resoursesDirectoryPath, name);
-      tasksListForListr = [...tasksListForListr, { title: name, task: () => loadPromise }];
-      return loadPromise
-        .then(({ data }) => fs.writeFile(path.join(dirpath, resourseFilepath), data));
-    }))
+
+    .then((list) => fs.mkdir(resoursesDirectoryPath).then(() => Promise.resolve(list
+      .forEach(({ name, resourseUrl }) => {
+        const getPromise = get(resourseUrl);
+        tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
+        return getPromise
+          .then(({ data }) => fs.writeFile(path.join(resoursesDirectoryPath, name), data));
+      }))))
+
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
 };
