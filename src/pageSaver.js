@@ -99,7 +99,12 @@ const savePage = (url, dirpath = process.cwd()) => {
         tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
         const resourseFilepath = path.join(resoursesDirectoryPath, name);
         return getPromise
-          .then(({ data, config }) => fs.writeFile(path.join(dirpath, resourseFilepath), data, config.responseType === 'stream' ? 'binary' : 'utf8'));
+          .then(({ data }) => {
+            pageLoaderLog('Name:', name);
+            pageLoaderLog('Data:', data);
+            pageLoaderLog('Is inst. of IncomingMessege', data instanceof Object);
+            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+          });
       })))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
