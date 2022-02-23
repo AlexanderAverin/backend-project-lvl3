@@ -14,16 +14,29 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
+const getResponseType = (pathname) => {
+  const binaryDataExtnames = ['.png', '.jpg', '.svg'];
+  const textDataExtnames = ['.css'];
+  const extname = path.extname(pathname);
+  if (binaryDataExtnames.includes(extname)) {
+    return 'arraybuffer';
+  }
+  if (textDataExtnames.includes(pathname)) {
+    return 'text';
+  }
+  return 'json';
+};
+
 const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
     arraybuffer: () => axios.get(url, { responseType: 'arraybuffer' }),
+    text: () => axios.get(url, { responseType: 'text' }),
   };
-  const binaryDataExtnames = ['.png', '.jpg', '.svg'];
   const { pathname } = new URL(url);
-  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'arraybuffer' : 'json';
+  const responseType = getResponseType(pathname);
 
-  return mapping[dataType]();
+  return mapping[responseType]();
 };
 
 const isAbsolutePath = (filepath) => {
