@@ -103,7 +103,8 @@ const savePage = (url, dirpath = process.cwd()) => {
             pageLoaderLog('Name:', name);
             pageLoaderLog('Data:', data);
             pageLoaderLog('Is inst. of IncomingMessege', data instanceof Object);
-            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
+            const dataToWrite = data.response ? data.response : data;
+            return fs.writeFile(path.join(dirpath, resourseFilepath), dataToWrite);
           });
       })))
 
