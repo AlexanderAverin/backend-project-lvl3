@@ -5,7 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
-import cheerio, { load } from 'cheerio';
+import cheerio from 'cheerio';
 import debug from 'debug';
 
 // Unused import (axiois debug)
@@ -17,11 +17,11 @@ pageLoaderLog.color = 270;
 const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
-    stream: () => axios.get(url, { responseType: 'stream' }),
+    arraybuffer: () => axios.get(url, { responseType: 'arraybuffer' }),
   };
   const binaryDataExtnames = ['.png', '.jpg', '.svg'];
   const { pathname } = new URL(url);
-  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'stream' : 'json';
+  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'arraybuffer' : 'json';
 
   return mapping[dataType]();
 };
@@ -103,8 +103,7 @@ const savePage = (url, dirpath = process.cwd()) => {
             pageLoaderLog('Name:', name);
             pageLoaderLog('Data:', data);
             pageLoaderLog('Is inst. of IncomingMessege', data instanceof Object);
-            const dataToWrite = data.response ? data.response : data;
-            return fs.writeFile(path.join(dirpath, resourseFilepath), dataToWrite);
+            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
           });
       })))
 
