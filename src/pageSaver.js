@@ -118,9 +118,9 @@ const savePage = (url, dirpath = process.cwd()) => {
     .then((files) => files.forEach((response) => {
       const { data, config } = response;
       const resourseFilepath = path
-        .join(dirpath, resoursesDirectoryPath, `${getFilename(config.url)}\n`);
+        .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      const dataToWrite = config.responseType === 'json' ? deleteBreaks(data) : data;
+      const dataToWrite = config.responseType === 'json' ? `${deleteBreaks(data)}\n` : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
