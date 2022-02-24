@@ -14,6 +14,11 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
+const deleteBreacks = (text) => {
+  const filtredChars = text.split('').filter((char) => char !== '\n');
+  return filtredChars.join('');
+};
+
 const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
@@ -111,10 +116,13 @@ const savePage = (url, dirpath = process.cwd()) => {
     })
 
     .then((files) => files.forEach((response) => {
+      const { data, config } = response;
       const resourseFilepath = path
-        .join(dirpath, resoursesDirectoryPath, getFilename(response.config.url));
+        .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      return fs.writeFile(resourseFilepath, response.data.trim());
+      const dataToWrite = config.responseType === 'json' ? data.trim() : data;
+
+      return fs.writeFile(resourseFilepath, dataToWrite);
     }))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
