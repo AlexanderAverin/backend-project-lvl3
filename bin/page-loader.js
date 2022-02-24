@@ -11,8 +11,13 @@ const isAxiosError = (error) => (error.isAxiosError);
 
 const isFileSystemError = (error) => (error.code !== undefined);
 
+const getDefaultError = () => {
+  console.error('Undefined error');
+  process.exit(1);
+};
+
 const errorHandler = (error) => {
-  const mapping = {
+  const axiosErrorsMapping = {
     404: () => {
       console.error(`ERROR:\n\t${error.config.url} not found (error 404)`);
       process.exit(1);
@@ -21,6 +26,12 @@ const errorHandler = (error) => {
       console.error(`ERROR:\n\t${error.config.url} internal server error`);
       process.exit(1);
     },
+    default: () => {
+      console.error('Axios error');
+      process.exit(1);
+    },
+  };
+  const fsErrorsMapping = {
     ENOENT: () => {
       console.error(`ERROR:\n\t${error.path} is not exist`);
       process.exit(1);
@@ -42,21 +53,18 @@ const errorHandler = (error) => {
       process.exit(1);
     },
     default: () => {
-      console.error('Undefined error');
+      console.error('Undefined file system error');
       process.exit(1);
     },
   };
-  if (isAxiosError(error) && !error.response) {
-    console.error('Axios error');
-    process.exit(1);
-  }
   if (isAxiosError(error)) {
-    return mapping[error.response.status]();
+    const status = error.response ? error.response.status : 'default';
+    return axiosErrorsMapping[status]();
   }
   if (isFileSystemError(error)) {
-    return mapping[error.code]();
+    return fsErrorsMapping[error.code ?? 'default']();
   }
-  return mapping.default();
+  return getDefaultError();
 };
 
 program
