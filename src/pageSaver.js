@@ -114,10 +114,11 @@ const savePage = (url, dirpath = process.cwd()) => {
 
     .then((files) => files.forEach((response) => {
       const { data, config } = response;
+      const filename = getFilename(config.url);
       const resourseFilepath = path
-        .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
+        .join(dirpath, resoursesDirectoryPath, filename);
 
-      const dataToWrite = config.responseType === 'json' ? `\ufeff${data}` : data;
+      const dataToWrite = path.extname(filename) === '.css' ? `\ufeff${data}` : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
