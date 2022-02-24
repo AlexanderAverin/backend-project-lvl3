@@ -114,7 +114,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, getFilename(response.config.url));
 
-      return fs.writeFile(resourseFilepath, response.data);
+      return fs.writeFile(resourseFilepath, response.data.trim());
     }))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
