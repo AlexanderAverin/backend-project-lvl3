@@ -117,7 +117,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      const dataToWrite = config.responseType === 'json' ? deleteBreaks(data).trim() : data;
+      const dataToWrite = config.responseType === 'json' ? `\ufeff${data}` : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
