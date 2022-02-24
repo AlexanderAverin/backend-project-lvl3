@@ -14,7 +14,7 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const deleteBreacks = (text) => {
+const deleteBreaks = (text) => {
   const filtredChars = text.split('').filter((char) => char !== '\n');
   return filtredChars.join('');
 };
@@ -120,7 +120,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      const dataToWrite = config.responseType === 'json' ? `${data.trim()} ` : data;
+      const dataToWrite = config.responseType === 'json' ? deleteBreaks(data) : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
