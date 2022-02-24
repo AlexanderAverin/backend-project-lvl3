@@ -1,11 +1,11 @@
-/* eslint-disable consistent-return */
 /* eslint-disable no-unused-vars */
+/* eslint-disable consistent-return */
 /* eslint-disable func-names */
 
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
-import cheerio, { load } from 'cheerio';
+import cheerio from 'cheerio';
 import debug from 'debug';
 
 // Unused import (axiois debug)
@@ -14,10 +14,7 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const deleteBreaks = (text) => {
-  const filtredChars = text.split('').filter((char) => char !== '\n');
-  return filtredChars.join('');
-};
+const deleteBreaks = (text) => text.replace(/(\r\n|\n|\r)/gm, '');
 
 const get = (url) => {
   const mapping = {
@@ -75,7 +72,7 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
   const tags = ['img', 'script', 'link'];
   tags.forEach((tag) => {
     $(tag).each(function () {
-      const { pathname, origin } = new URL(mainUrl);
+      const { origin } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
       // pageLoaderLog('Original path or url: %o', resourseData);
       // pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
@@ -111,7 +108,7 @@ const savePage = (url, dirpath = process.cwd()) => {
 
     .then((list) => {
       tasksListForListr = getTasksList(list);
-      const promises = list.map((resourseUrl) => get(resourseUrl));
+      const promises = tasksListForListr.map(({ task }) => task());
       return Promise.all(promises);
     })
 
@@ -120,7 +117,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      const dataToWrite = config.responseType === 'json' ? `${deleteBreaks(data)}\n` : data;
+      const dataToWrite = config.responseType === 'json' ? deleteBreaks(data).trim() : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
