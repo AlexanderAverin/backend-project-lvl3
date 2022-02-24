@@ -5,7 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
-import cheerio from 'cheerio';
+import cheerio, { load } from 'cheerio';
 import debug from 'debug';
 
 // Unused import (axiois debug)
@@ -14,29 +14,16 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const getResponseType = (pathname) => {
-  const binaryDataExtnames = ['.png', '.jpg', '.svg'];
-  const textDataExtnames = ['.css'];
-  const extname = path.extname(pathname);
-  if (binaryDataExtnames.includes(extname)) {
-    return 'arraybuffer';
-  }
-  if (textDataExtnames.includes(pathname)) {
-    return 'text';
-  }
-  return 'json';
-};
-
 const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
     arraybuffer: () => axios.get(url, { responseType: 'arraybuffer' }),
-    text: () => axios.get(url, { responseType: 'text' }),
   };
+  const binaryDataExtnames = ['.png', '.jpg', '.svg'];
   const { pathname } = new URL(url);
-  const responseType = getResponseType(pathname);
+  const dataType = binaryDataExtnames.includes(path.extname(pathname)) ? 'arraybuffer' : 'json';
 
-  return mapping[responseType]();
+  return mapping[dataType]();
 };
 
 const isAbsolutePath = (filepath) => {
@@ -59,6 +46,16 @@ const getFilename = (url) => {
     : formatedUrl.replace(fileExtname, '');
 
   return `${urlWithoutExtname.replace(searchRegexp, '-')}${fileExtname}`;
+};
+
+const getTasksList = (list) => {
+  let tasks = [];
+  list.forEach((resourseUrl) => {
+    const task = () => get(resourseUrl);
+    const title = getFilename(resourseUrl);
+    tasks = [...tasks, { title, task }];
+  });
+  return tasks;
 };
 
 const formatDocument = (mainUrl, document, filesDirectoryName) => {
@@ -84,10 +81,9 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
-        const name = getFilename(resourse);
-        pageLoaderLog('name is %o', name);
-        resoursesList = [...resoursesList, { resourseUrl: resourse, name }];
-        $(this).attr(mapping[tag], path.join(filesDirectoryName, name));
+        pageLoaderLog('name is %o', getFilename(resourse));
+        resoursesList = [...resoursesList, resourse];
+        $(this).attr(mapping[tag], path.join(filesDirectoryName, getFilename(resourse)));
       }
     });
   });
@@ -103,22 +99,23 @@ const savePage = (url, dirpath = process.cwd()) => {
   return get(url)
     .then(({ data }) => {
       const { htmlData, resoursesList } = formatDocument(url, data, resoursesDirectoryPath);
-      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData).then(() => resoursesList);
+      return fs.writeFile(path.join(dirpath, htmlFilepath), htmlData)
+        .then(() => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)))
+        .then(() => resoursesList);
     })
 
-    .then((list) => fs.mkdir(path.join(dirpath, resoursesDirectoryPath)).then(() => list
-      .forEach(({ name, resourseUrl }) => {
-        const getPromise = get(resourseUrl);
-        tasksListForListr = [...tasksListForListr, { title: name, task: () => getPromise }];
-        const resourseFilepath = path.join(resoursesDirectoryPath, name);
-        return getPromise
-          .then(({ data }) => {
-            pageLoaderLog('Name:', name);
-            pageLoaderLog('Data:', data);
-            pageLoaderLog('Is inst. of IncomingMessege', data instanceof Object);
-            return fs.writeFile(path.join(dirpath, resourseFilepath), data);
-          });
-      })))
+    .then((list) => {
+      tasksListForListr = getTasksList(list);
+      const promises = list.map((resourseUrl) => get(resourseUrl));
+      return Promise.all(promises);
+    })
+
+    .then((files) => files.forEach((response) => {
+      const resourseFilepath = path
+        .join(dirpath, resoursesDirectoryPath, getFilename(response.config.url));
+
+      return fs.writeFile(resourseFilepath, response.data);
+    }))
 
     .then(() => ({ htmlFilepath: path.join(dirpath, htmlFilepath), tasksListForListr }))
     .catch((error) => Promise.reject(error));
