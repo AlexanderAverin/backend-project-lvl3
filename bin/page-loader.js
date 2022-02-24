@@ -7,7 +7,7 @@ import savePage from '../src/pageSaver.js';
 
 const program = new Command();
 
-const isAxiosError = (error) => (error.response !== undefined);
+const isAxiosError = (error) => (error.isAxiosError);
 
 const isFileSystemError = (error) => (error.code !== undefined);
 
@@ -42,6 +42,10 @@ const errorHandler = (error) => {
       process.exit(1);
     },
   };
+  if (isAxiosError(error) && !error.response) {
+    console.error('Axios error');
+    process.exit(1);
+  }
   if (isAxiosError(error)) {
     return mapping[error.response.status]();
   }
