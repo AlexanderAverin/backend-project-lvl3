@@ -120,7 +120,7 @@ const savePage = (url, dirpath = process.cwd()) => {
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, getFilename(config.url));
 
-      const dataToWrite = config.responseType === 'json' ? data.trim() : data;
+      const dataToWrite = config.responseType === 'json' ? `${data.trim()} ` : data;
 
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
