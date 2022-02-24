@@ -15,6 +15,18 @@ const logThis = debug('test');
 
 logThis.color = 270;
 
+class NoErrorThrownError extends Error {}
+
+const getError = async (call) => {
+  try {
+    await call();
+
+    throw new NoErrorThrownError();
+  } catch (error) {
+    return error;
+  }
+};
+
 const getFixturesFile = (filename) => {
   const filepath = path.join('__fixtures__', filename);
   return fs.readFile(filepath, 'utf8');
@@ -34,18 +46,18 @@ beforeEach(async () => {
     .reply(200, pageBefore);
 });
 
-test('Test that function return html filepath', async () => {
+test('Testing function return html filepath', async () => {
   const { htmlFilepath } = await savePage('https://ru.hexlet.io/courses', dirpath);
   expect(htmlFilepath).toEqual(path.join(dirpath, 'ru-hexlet-io-courses.html'));
 });
 
-test('Test that function create directory with page resourses', async () => {
+test('Testing that function create directory with page resourses', async () => {
   await savePage('https://ru.hexlet.io/courses', dirpath);
   const directoryList = fs.readdir(dirpath);
   expect((await directoryList).includes('ru-hexlet-io-courses_files')).toBe(true);
 });
 
-test('Test that function change html file', async () => {
+test('Testing that function change html file', async () => {
   const pageAfter = await getFixturesFile('pageAfter.html');
   const { htmlFilepath } = await savePage('https://ru.hexlet.io/courses', dirpath);
   const changedHtmlFile = await fs.readFile(htmlFilepath, 'utf8');
@@ -55,35 +67,25 @@ test('Test that function change html file', async () => {
 
 // Errors thowing tests
 
-test('Test that function throws file system error (EEXIST)', async () => {
+test('Testing that function throws file system error (EEXIST)', async () => {
   await savePage('https://ru.hexlet.io/courses', dirpath);
-  try {
-    await savePage('https://ru.hexlet.io/courses', dirpath);
-  } catch (error) {
-    expect(error.code).toEqual('EEXIST');
-  }
+  const error = await getError(async () => savePage('https://ru.hexlet.io/courses', dirpath));
+  expect(error).toHaveProperty('code', 'EEXIST');
 });
 
-test('Test that function throw 404 axios error', async () => {
+test('Testing that function throw 404 axios error', async () => {
   nock('https://ru.example404.io')
     .get(/.*/)
     .reply(404, null);
-
-  try {
-    await savePage('https://ru.example404.io', dirpath);
-  } catch (error) {
-    expect(error.response.status).toEqual(404);
-  }
+  const error = await getError(async () => savePage('https://ru.example404.io', dirpath));
+  expect(error).toHaveProperty('response.status', 404);
 });
 
-test('Test that function throw 500 axios error', async () => {
+test('Testing that function throw 500 axios error', async () => {
   nock('https://ru.example500.io')
     .get(/.*/)
     .reply(500, null);
 
-  try {
-    await savePage('https://ru.example500.io', dirpath);
-  } catch (error) {
-    expect(error.response.status).toEqual(500);
-  }
+  const error = await getError(async () => savePage('https://ru.example500.io', dirpath));
+  expect(error).toHaveProperty('response.status', 500);
 });
