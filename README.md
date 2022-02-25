@@ -10,14 +10,14 @@
 
 Package work example:
 
-Downloading html: https://asciinema.org/a/TUJZIZY3ZZE1QG2M7eDArEwK4
+* [Downloading html](https://asciinema.org/a/TUJZIZY3ZZE1QG2M7eDArEwK4)
 
-Downloading images: https://asciinema.org/a/KAo2Zth9iGvIpauvTCPnqGbyt
+    * [Downloading images](https://asciinema.org/a/KAo2Zth9iGvIpauvTCPnqGbyt)
 
-Downloading links and scripts: https://asciinema.org/a/iDVTpqcMVfFTMsbn1mx9cv1VM
+    * [Downloading links and scripts](https://asciinema.org/a/iDVTpqcMVfFTMsbn1mx9cv1VM)
 
-Debug working: https://asciinema.org/a/LdZg1JEhRcvGmekAMzQyJKsVl
+    * [Debug working](https://asciinema.org/a/LdZg1JEhRcvGmekAMzQyJKsVl)
 
-Errors handling: https://asciinema.org/a/enqdjgjcUn7be9oLAX1WTPMyb 
+    * [Errors handling](https://asciinema.org/a/enqdjgjcUn7be9oLAX1WTPMyb) 
 
-Visual resourses downloading: https://asciinema.org/a/NUeG6UF8mxCVX21fLVz9B5HC1
+    * [Visual resourses downloading](https://asciinema.org/a/NUeG6UF8mxCVX21fLVz9B5HC1)
