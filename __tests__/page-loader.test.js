@@ -44,6 +44,14 @@ beforeEach(async () => {
     .persist()
     .get(/.*/)
     .reply(200, pageBefore);
+
+  nock('https://ru.example404.io')
+    .get(/.*/)
+    .reply(404, null);
+
+  nock('https://ru.example500.io')
+    .get(/.*/)
+    .reply(500, null);
 });
 
 test('Testing function return html filepath', async () => {
@@ -74,18 +82,11 @@ test('Testing that function throws file system error (EEXIST)', async () => {
 });
 
 test('Testing that function throw 404 axios error', async () => {
-  nock('https://ru.example404.io')
-    .get(/.*/)
-    .reply(404, null);
   const error = await getError(async () => savePage('https://ru.example404.io', dirpath));
   expect(error).toHaveProperty('response.status', 404);
 });
 
 test('Testing that function throw 500 axios error', async () => {
-  nock('https://ru.example500.io')
-    .get(/.*/)
-    .reply(500, null);
-
   const error = await getError(async () => savePage('https://ru.example500.io', dirpath));
   expect(error).toHaveProperty('response.status', 500);
 });

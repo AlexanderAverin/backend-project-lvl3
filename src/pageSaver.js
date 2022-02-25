@@ -61,33 +61,25 @@ const getTasksList = (list) => {
 const formatDocument = (mainUrl, document, filesDirectoryName) => {
   const $ = cheerio.load(document);
   let resoursesList = [];
-  const mapping = {
-    img: 'src',
-    script: 'src',
-    link: 'href',
-  };
-  // resoursesList: [<imageUrl>, <name>]
+  const tagTypeMapping = { img: 'src', script: 'src', link: 'href' };
+
   const tags = ['img', 'script', 'link'];
   tags.forEach((tag) => {
     $(tag).each(function () {
       const { origin } = new URL(mainUrl);
-      const resourseData = $(this).attr(mapping[tag]) ?? '';
-      pageLoaderLog('Original path or url: %o', resourseData);
-      pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
+      const resourseData = $(this).attr(tagTypeMapping[tag]) ?? '';
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(resourseData, origin).href;
-      pageLoaderLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
-        pageLoaderLog('name is %o', getFilename(resourse));
+        // pageLoaderLog('name is %o', getFilename(resourse));
         resoursesList = [...resoursesList, resourse];
-        $(this).attr(mapping[tag], path.join(filesDirectoryName, getFilename(resourse)));
+        $(this).attr(tagTypeMapping[tag], path.join(filesDirectoryName, getFilename(resourse)));
       }
     });
   });
-
   return { htmlData: $.root().html(), resoursesList };
 };
 
