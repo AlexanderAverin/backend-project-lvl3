@@ -14,8 +14,6 @@ import axiosDebug from 'axios-debug-log';
 const pageLoaderLog = debug('page-loader');
 pageLoaderLog.color = 270;
 
-const deleteBreaks = (text) => text.replace(/(\r\n|\n|\r)/gm, '');
-
 const get = (url) => {
   const mapping = {
     json: () => axios.get(url, { responseType: 'json' }),
@@ -74,12 +72,12 @@ const formatDocument = (mainUrl, document, filesDirectoryName) => {
     $(tag).each(function () {
       const { origin } = new URL(mainUrl);
       const resourseData = $(this).attr(mapping[tag]) ?? '';
-      // pageLoaderLog('Original path or url: %o', resourseData);
-      // pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
+      pageLoaderLog('Original path or url: %o', resourseData);
+      pageLoaderLog('Is absolute path %o', isAbsolutePath(resourseData));
       const resourse = isAbsolutePath(resourseData)
         ? resourseData
         : new URL(resourseData, origin).href;
-      // pageLoaderLog('Resourse: %o', resourse);
+      pageLoaderLog('Resourse: %o', resourse);
 
       // Check that main url host equal resourse url host
       if ((new URL(mainUrl).hostname === new URL(resourse).hostname && resourse !== '') || !isAbsolutePath(resourseData)) {
@@ -108,8 +106,8 @@ const savePage = (url, dirpath = process.cwd()) => {
 
     .then((list) => {
       tasksListForListr = getTasksList(list);
-      const promises = tasksListForListr.map(({ task }) => task());
-      return Promise.all(promises);
+      const axiosPromieses = tasksListForListr.map(({ task }) => task());
+      return Promise.all(axiosPromieses);
     })
 
     .then((files) => files.forEach((response) => {
@@ -117,9 +115,8 @@ const savePage = (url, dirpath = process.cwd()) => {
       const filename = getFilename(config.url);
       const resourseFilepath = path
         .join(dirpath, resoursesDirectoryPath, filename);
-
+      // If resourse is css save it in utf8 with BOM (\ufeff before data)
       const dataToWrite = path.extname(filename) === '.css' ? `\ufeff${data}` : data;
-
       return fs.writeFile(resourseFilepath, dataToWrite);
     }))
 
