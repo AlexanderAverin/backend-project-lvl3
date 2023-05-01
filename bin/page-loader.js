@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import Listr from 'listr'
-import { Command } from 'commander/esm.mjs'
+import { Command } from 'commander'
 
 import savePage from '../src/pageSaver.js'
 
