@@ -1,3 +1,3 @@
-import savePage from './src/pageSaver.js';
+import savePage from './src/pageSaver.js'
 
-export default savePage;
+export default savePage
