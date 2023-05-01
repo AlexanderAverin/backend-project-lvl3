@@ -23,14 +23,20 @@
   },
   "homepage": "https://github.com/AlexanderAverin/backend-project-lvl3#readme",
   "devDependencies": {
+    "@babel/cli": "^7.21.5",
+    "@babel/core": "^7.21.5",
+    "@babel/node": "^7.20.7",
+    "@babel/preset-env": "^7.21.5",
     "@jest/globals": "^27.5.1",
+    "babel-plugin-rewrite-module-path": "^0.0.4",
     "eslint": "^8.17.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "^26.1.1",
     "eslint-plugin-n": "^15.2.2",
     "eslint-plugin-promise": "^6.0.0",
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "pkg": "^5.8.1"
   },
   "dependencies": {
     "axios": "^0.25.0",
